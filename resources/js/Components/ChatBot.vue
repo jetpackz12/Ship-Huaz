@@ -7,7 +7,7 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
-})
+});
 
 const chatMessages = ref([
     {
@@ -372,11 +372,11 @@ function openChat() {
                 <svg
                     v-if="!chatOpen"
                     key="chat"
-                    class="w-6 h-6 fill-navy"
+                    class="w-8 h-8 fill-navy"
                     viewBox="0 0 24 24"
                 >
                     <path
-                        d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
+                        d="M12 2a1 1 0 0 1 1 1v1h3a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1v2a1 1 0 1 1-2 0v-2h-2v2a1 1 0 1 1-2 0v-2H8a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h3V3a1 1 0 0 1 1-1zm4 5H8a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM10 10a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-5 5h6a1 1 0 1 1 0 2H9a1 1 0 1 1 0-2z"
                     />
                 </svg>
                 <svg
@@ -399,3 +399,67 @@ function openChat() {
         ></span>
     </div>
 </template>
+<style scoped>
+/* ── Chat FAB animation ── */
+.chat-pop-enter-active {
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chat-pop-leave-active {
+    transition: all 0.18s ease-in;
+}
+.chat-pop-enter-from {
+    opacity: 0;
+    transform: scale(0.85) translateY(12px);
+    transform-origin: bottom right;
+}
+.chat-pop-leave-to {
+    opacity: 0;
+    transform: scale(0.9) translateY(8px);
+    transform-origin: bottom right;
+}
+
+/* ── Icon swap ── */
+.icon-swap-enter-active,
+.icon-swap-leave-active {
+    transition: all 0.15s ease;
+}
+.icon-swap-enter-from {
+    opacity: 0;
+    transform: scale(0.7) rotate(-20deg);
+}
+.icon-swap-leave-to {
+    opacity: 0;
+    transform: scale(0.7) rotate(20deg);
+}
+
+/* ── Typing indicator ── */
+.typing-dots span {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background: rgba(196, 137, 58, 0.6);
+    border-radius: 50%;
+    animation: typingbounce 1.2s ease-in-out infinite;
+}
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+@keyframes typingbounce {
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-5px);
+    }
+}
+
+/* ── Chat FAB shadow ── */
+.chat-fab {
+    box-shadow: 0 8px 24px rgba(196, 137, 58, 0.35);
+}
+</style>
