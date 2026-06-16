@@ -12,10 +12,6 @@ Route::get('/', function () {
     ]);
 });
 
-// Route::get('/home', function () {
-//     return Inertia::render('Home');
-// })->middleware(['auth', 'verified', 'client'])->name('home');
-
 Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('client.')->group(function () {
     Route::get('/home', function () {
         return Inertia::render('Client/Home');
