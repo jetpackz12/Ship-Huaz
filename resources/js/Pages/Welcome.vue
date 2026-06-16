@@ -301,15 +301,19 @@ defineProps({
                             Contact
                         </a>
                     </li>
+                    <li v-if="$page.props.auth.user">
+                        <Link
+                            :href="route('client.home')"
+                            class="font-body text-[13px] font-medium text-navy bg-brass hover:bg-gold px-5 py-2 rounded-sm transition-colors duration-200"
+                        >
+                            <font-awesome-icon
+                                icon="fa-solid fa-angles-right"
+                            />
+                            BACK
+                        </Link>
+                    </li>
                     <template v-if="canLogin">
-                        <li v-if="$page.props.auth.user">
-                            <Link
-                                :href="route('client.home')"
-                                class="font-mono text-[11px] tracking-[.14em] uppercase text-white/65 hover:text-white transition-colors duration-200"
-                                >Dashboard</Link
-                            >
-                        </li>
-                        <template v-else>
+                        <template v-if="!$page.props.auth.user">
                             <li>
                                 <Link
                                     :href="route('login')"
@@ -378,11 +382,31 @@ defineProps({
                     <nav class="grid grid-cols-2 gap-1 mb-5">
                         <a
                             v-for="item in [
-                                { label: 'Home', icon: 'fa-solid fa-house', href: '#home' },
-                                { label: 'About', icon: 'fa-solid fa-circle-info', href: '#about' },
-                                { label: 'Services', icon: 'fa-solid fa-person-military-pointing', href: '#services' },
-                                { label: 'Blog & News', icon: 'fa-solid fa-newspaper', href: '#blog' },
-                                { label: 'Contact', icon: 'fa-solid fa-id-card', href: '#contact' },
+                                {
+                                    label: 'Home',
+                                    icon: 'fa-solid fa-house',
+                                    href: '#home',
+                                },
+                                {
+                                    label: 'About',
+                                    icon: 'fa-solid fa-circle-info',
+                                    href: '#about',
+                                },
+                                {
+                                    label: 'Services',
+                                    icon: 'fa-solid fa-person-military-pointing',
+                                    href: '#services',
+                                },
+                                {
+                                    label: 'Blog & News',
+                                    icon: 'fa-solid fa-newspaper',
+                                    href: '#blog',
+                                },
+                                {
+                                    label: 'Contact',
+                                    icon: 'fa-solid fa-id-card',
+                                    href: '#contact',
+                                },
                             ]"
                             :key="item.label"
                             :href="item.href"
@@ -407,7 +431,11 @@ defineProps({
                                 :href="route('client.home')"
                                 class="w-full text-center font-body text-sm font-medium text-white/70 border border-white/20 hover:border-brass/50 hover:text-white px-6 py-3 rounded-sm transition-colors duration-200"
                             >
-                                Dashboard
+                                
+                            <font-awesome-icon
+                                icon="fa-solid fa-angles-right"
+                            />
+                             BACK
                             </Link>
                         </div>
                         <div v-else class="flex flex-col gap-2">
@@ -533,7 +561,7 @@ defineProps({
                 </p>
                 <div class="flex flex-wrap gap-4 justify-center">
                     <Link
-                        href="/login"
+                        :href="$page.props.auth.user ? $page.props.auth.user.role == 'client' ? route('client.home') : route('admin.dashboard') : route('login')"
                         class="inline-block bg-brass hover:bg-gold text-navy font-body font-medium text-sm tracking-wide px-8 py-4 rounded-sm transition-all duration-200 hover:-translate-y-px"
                         >Book a Reservation</Link
                     >
@@ -1006,7 +1034,10 @@ defineProps({
             <div class="max-w-6xl mx-auto px-8">
                 <div class="grid md:grid-cols-4 gap-12 mb-14">
                     <div class="md:col-span-1">
-                        <a href="#home" class="flex items-center justify-center gap-3 mb-5">
+                        <a
+                            href="#home"
+                            class="flex items-center justify-center gap-3 mb-5"
+                        >
                             <svg
                                 class="w-7 h-7 fill-brass flex-shrink-0"
                                 viewBox="0 0 48 48"
@@ -1041,7 +1072,9 @@ defineProps({
                         >
                             {{ col.heading }}
                         </h4>
-                        <ul class="space-y-3 list-none p-0 flex flex-col items-center justify-center">
+                        <ul
+                            class="space-y-3 list-none p-0 flex flex-col items-center justify-center"
+                        >
                             <li v-for="link in col.links" :key="link.label">
                                 <a
                                     :href="link.href"
