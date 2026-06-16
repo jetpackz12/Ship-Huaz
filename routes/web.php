@@ -12,9 +12,15 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/home', function () {
-    return Inertia::render('Home');
-})->middleware(['auth', 'verified', 'client'])->name('home');
+// Route::get('/home', function () {
+//     return Inertia::render('Home');
+// })->middleware(['auth', 'verified', 'client'])->name('home');
+
+Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('client.')->group(function () {
+    Route::get('/home', function () {
+        return Inertia::render('Client/Home');
+    })->name('home');
+});
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');

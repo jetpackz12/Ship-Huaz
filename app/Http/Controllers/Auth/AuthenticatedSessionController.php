@@ -38,7 +38,7 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         }
 
-        return redirect()->intended(route('home', absolute: false));
+        return redirect()->intended(route('client.home', absolute: false));
     }
 
     /**

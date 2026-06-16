@@ -17,7 +17,7 @@ class EnsureUserIsAdmin
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check() || Auth::user()->role !== 'admin') {
-            return redirect()->route('home');
+            return redirect()->route('client.home');
         }
 
         return $next($request);

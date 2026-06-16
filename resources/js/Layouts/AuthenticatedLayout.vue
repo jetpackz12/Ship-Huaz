@@ -49,7 +49,7 @@ const sidebarMenus = [
             <div
                 class="h-16 flex items-center justify-between px-5 border-b border-slate-800"
             >
-                <Link class="flex items-center gap-3 no-underline flex-shrink-0" :href="route('home')">
+                <Link class="flex items-center gap-3 no-underline flex-shrink-0" :href="route('client.home')">
                     <svg
                         class="w-8 h-8 fill-brass flex-shrink-0"
                         viewBox="0 0 48 48"

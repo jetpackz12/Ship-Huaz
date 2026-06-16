@@ -304,7 +304,7 @@ defineProps({
                     <template v-if="canLogin">
                         <li v-if="$page.props.auth.user">
                             <Link
-                                :href="route('home')"
+                                :href="route('client.home')"
                                 class="font-mono text-[11px] tracking-[.14em] uppercase text-white/65 hover:text-white transition-colors duration-200"
                                 >Dashboard</Link
                             >
@@ -404,7 +404,7 @@ defineProps({
                             class="flex justify-center"
                         >
                             <Link
-                                :href="route('home')"
+                                :href="route('client.home')"
                                 class="w-full text-center font-body text-sm font-medium text-white/70 border border-white/20 hover:border-brass/50 hover:text-white px-6 py-3 rounded-sm transition-colors duration-200"
                             >
                                 Dashboard
