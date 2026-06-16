@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { Link } from "@inertiajs/vue3";
+import ChatBot from "@/Components/ChatBot.vue";
 
 const isShowSideBar = ref(false);
 
@@ -134,6 +135,9 @@ const sidebarMenus = [
             <main class="flex-1 overflow-y-auto p-6">
                 <slot />
             </main>
+            
+            <!-- ══════════ CHATBOT FAB ══════════ -->
+            <ChatBot />
         </div>
     </div>
 </template>
