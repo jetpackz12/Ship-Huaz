@@ -1,32 +1,31 @@
 <script setup>
 import { ref } from "vue";
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import ChatBot from "@/Components/ChatBot.vue";
 
 const isShowSideBar = ref(false);
+const page = usePage();
 
 const sidebarMenus = [
-    {
-        menuName: "Home",
-        route: "#",
-        icon: "fa-solid fa-home",
-    },
+    { menuName: "Home", route: route("client.home"), icon: "fa-solid fa-home" },
     {
         menuName: "Booking",
-        route: "#",
+        route: route("client.booking"),
         icon: "fa-solid fa-book-bookmark",
     },
     {
         menuName: "Notifications",
-        route: "#",
+        route: route("client.notifications"),
         icon: "fa-solid fa-bell",
     },
     {
         menuName: "Profile",
-        route: "#",
+        route: route("client.profile"),
         icon: "fa-solid fa-user-edit",
     },
 ];
+
+const isActive = (href) => page.url.startsWith(new URL(href).pathname);
 </script>
 
 <template>
@@ -38,7 +37,7 @@ const sidebarMenus = [
             class="fixed inset-0 bg-black/50 z-20 lg:hidden"
         ></div>
 
-        <!-- Sidebar --> 
+        <!-- Sidebar -->
         <aside
             :class="[
                 isShowSideBar ? 'translate-x-0' : '-translate-x-full',
@@ -49,7 +48,10 @@ const sidebarMenus = [
             <div
                 class="h-16 flex items-center justify-between px-5 border-b border-slate-800"
             >
-                <Link class="flex items-center gap-3 no-underline flex-shrink-0" :href="route('client.home')">
+                <Link
+                    class="flex items-center gap-3 no-underline flex-shrink-0"
+                    :href="route('client.home')"
+                >
                     <svg
                         class="w-8 h-8 fill-brass flex-shrink-0"
                         viewBox="0 0 48 48"
@@ -83,15 +85,20 @@ const sidebarMenus = [
 
             <!-- Navigation -->
             <nav class="p-4 space-y-2">
-                <a
+                <Link
                     v-for="menu in sidebarMenus"
                     :key="menu.menuName"
                     :href="menu.route"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-800 hover:text-white transition-all duration-200"
+                    :class="[
+                        'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                        isActive(menu.route)
+                            ? 'bg-slate-800 text-white font-semibold'
+                            : 'text-gray-300 hover:bg-slate-800 hover:text-white',
+                    ]"
                 >
                     <font-awesome-icon :icon="menu.icon" />
                     <span>{{ menu.menuName }}</span>
-                </a>
+                </Link>
             </nav>
         </aside>
 
@@ -113,9 +120,7 @@ const sidebarMenus = [
                         />
                     </button>
 
-                    <h2 class="text-lg font-semibold text-white">
-                        Home
-                    </h2>
+                    <h2 class="text-lg font-semibold text-white">Home</h2>
                 </div>
 
                 <div class="flex items-center gap-4">
@@ -123,9 +128,11 @@ const sidebarMenus = [
                         :href="route('logout')"
                         method="post"
                         as="button"
-                        class="px-4 py-2 text-navy bg-brass hover:bg-gold  rounded-lg transition"
+                        class="px-4 py-2 text-navy bg-brass hover:bg-gold rounded-lg transition"
                     >
-                        <font-awesome-icon icon="fa-solid fa-right-from-bracket" />
+                        <font-awesome-icon
+                            icon="fa-solid fa-right-from-bracket"
+                        />
                         Logout
                     </Link>
                 </div>
@@ -135,7 +142,7 @@ const sidebarMenus = [
             <main class="flex-1 overflow-y-auto p-6">
                 <slot />
             </main>
-            
+
             <!-- ══════════ CHATBOT FAB ══════════ -->
             <ChatBot />
         </div>
