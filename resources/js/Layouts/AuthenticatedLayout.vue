@@ -150,7 +150,7 @@ const isActive = (href) => page.url.startsWith(new URL(href).pathname);
                     class="pointer-events-none fixed inset-0 flex items-center justify-center z-0 overflow-hidden"
                 >
                     <svg
-                        class="w-[480px] h-[480px] fill-slate-900 opacity-[0.12] flex-shrink-0"
+                        class="w-[100px] h-[100px] sm:w-[480px] sm:h-[480px] fill-slate-900 opacity-[0.12] flex-shrink-0"
                         viewBox="0 0 48 48"
                     >
                         <path
