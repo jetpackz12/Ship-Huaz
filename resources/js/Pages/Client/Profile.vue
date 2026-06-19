@@ -327,22 +327,11 @@ const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, fi
                     <div class="p-6 text-gray-900">
 
                         <!-- Header -->
-                        <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center mb-4">
                             <h1 class="sm:text-xl font-bold">
                                 <font-awesome-icon icon="fa-solid fa-clock-rotate-left" />
                                 Booking History
                             </h1>
-                            <!-- Per-page selector -->
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-gray-500">Show</span>
-                                <select
-                                    v-model="perPage"
-                                    class="text-xs border border-gray-300 rounded-md py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
-                                >
-                                    <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}</option>
-                                </select>
-                                <span class="text-xs text-gray-500">per page</span>
-                            </div>
                         </div>
 
                         <!-- Search & Filters -->
@@ -350,46 +339,60 @@ const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, fi
                             <!-- Filter Row -->
                             <div class="flex flex-wrap gap-2">
                                 <select v-model="filterStatus"
-                                    class="text-xs border border-gray-300 rounded-md py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700">
+                                    class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700">
                                     <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
                                         {{ opt.label }}
                                     </option>
                                 </select>
 
                                 <select v-model="filterEvent"
-                                    class="text-xs border border-gray-300 rounded-md py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700">
+                                    class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700">
                                     <option value="all">All Events</option>
                                     <option v-for="event in uniqueEvents" :key="event" :value="event">{{ event }}</option>
                                 </select>
 
-                                <div class="flex items-center gap-1">
+                                <div class="flex items-center gap-1 w-full sm:w-auto">
                                     <span class="text-xs text-gray-500">From</span>
                                     <input v-model="dateFrom" type="date"
-                                        class="text-xs border border-gray-300 rounded-md py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700" />
+                                        class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700" />
                                 </div>
 
-                                <div class="flex items-center gap-1">
+                                <div class="flex items-center gap-1 w-full sm:w-auto">
                                     <span class="text-xs text-gray-500">To</span>
                                     <input v-model="dateTo" type="date"
-                                        class="text-xs border border-gray-300 rounded-md py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700" />
+                                        class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700" />
                                 </div>
 
                                 <button v-if="hasActiveFilters" @click="clearFilters"
-                                    class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 px-2 py-1.5 rounded-md border border-red-200 hover:bg-red-50 transition-colors">
+                                    class="text-xs text-red-500 hover:text-red-700 gap-1 px-2 py-1.5 w-full sm:w-auto rounded-md border border-red-200 hover:bg-red-50 transition-colors">
                                     <font-awesome-icon icon="fa-solid fa-xmark" />
                                     Clear
                                 </button>
                             </div>
 
-                            <!-- Search Bar -->
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
-                                    <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="text-xs" />
-                                </span>
-                                <input v-model="searchQuery" type="text"
-                                    placeholder="Search by reference, event, package, or payment..."
-                                    class="w-full pl-8 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
-                            </div>
+                           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <!-- Search Bar -->
+                                <div class="relative sm:w-2/3">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
+                                        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="text-xs" />
+                                    </span>
+                                    <input v-model="searchQuery" type="text"
+                                        placeholder="Search by reference, event, package, or payment..."
+                                        class="w-full pl-8 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
+                                
+                                <!-- Per-page selector -->
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-500">Show</span>
+                                    <select
+                                        v-model="perPage"
+                                        class="text-xs border border-gray-300 rounded-md py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
+                                    >
+                                        <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}</option>
+                                    </select>
+                                    <span class="text-xs text-gray-500">per page</span>
+                                </div>
+                           </div>
                         </div>
 
                         <!-- Table -->
