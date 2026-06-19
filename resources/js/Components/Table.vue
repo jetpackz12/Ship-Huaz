@@ -4,7 +4,7 @@ import { ref, computed, watch } from "vue";
 const props = defineProps({
     data: { type: Array, required: true },
     columns: { type: Array, required: true },
-    tableActions: {
+    actions: {
         type: Object,
         default: () => ({
             isDateFilterShow: true,
@@ -109,7 +109,7 @@ const rangeEnd = computed(() =>
             class="flex flex-col gap-2 sm:flex-row sm:items-center justify-between"
         >
             <!-- Filter Row -->
-            <div class="flex flex-wrap gap-2" v-if="tableActions.isDateFilterShow">
+            <div class="flex flex-wrap gap-2" v-if="actions.isDateFilterShow">
                 <div class="flex items-center gap-1 w-full sm:w-auto">
                     <span class="text-xs text-gray-500">From</span>
                     <input
@@ -139,7 +139,7 @@ const rangeEnd = computed(() =>
             </div>
 
             <!-- Per-page selector -->
-            <div class="flex items-center gap-2" v-if="tableActions.isPerPageShow">
+            <div class="flex items-center gap-2" v-if="actions.isPerPageShow">
                 <span class="text-xs text-gray-500">Show</span>
                 <select
                     v-model="perPage"
@@ -155,7 +155,7 @@ const rangeEnd = computed(() =>
 
         <div class="flex items-center">
             <!-- Search Bar -->
-            <div class="relative w-full" v-if="tableActions.isSearchShow">
+            <div class="relative w-full" v-if="actions.isSearchShow">
                 <span
                     class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none"
                 >
