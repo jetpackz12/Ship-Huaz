@@ -397,39 +397,39 @@ const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, fi
                             <table class="w-full text-center text-sm">
                                 <thead>
                                     <tr class="bg-navy border-b border-gold">
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Booking Ref</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Event</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Date</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Time</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Package</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Amount</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Payment</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Status</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Booking Ref</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Event</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Date</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Time</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Package</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Amount</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Payment</th>
+                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white text-gray-700">
                                     <tr v-for="booking in paginatedBookings" :key="booking.ref"
                                         class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-3 py-2.5 font-mono text-xs text-blue-900 font-semibold whitespace-nowrap">
+                                        <td class="px-3 py-2.5 border border-stone-400 font-mono text-xs text-blue-900 font-semibold whitespace-nowrap">
                                             {{ booking.ref }}
                                         </td>
-                                        <td class="px-3 py-2.5 text-xs text-black whitespace-nowrap">{{ booking.event }}</td>
-                                        <td class="px-3 py-2.5 text-xs text-black whitespace-nowrap">{{ formatDate(booking.date) }}</td>
-                                        <td class="px-3 py-2.5 text-xs text-black whitespace-nowrap">{{ booking.time }}</td>
-                                        <td class="px-3 py-2.5 text-xs text-black text-left max-w-[200px]">
+                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black whitespace-nowrap">{{ booking.event }}</td>
+                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black whitespace-nowrap">{{ formatDate(booking.date) }}</td>
+                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black whitespace-nowrap">{{ booking.time }}</td>
+                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black text-left max-w-[200px]">
                                             <span class="font-medium">{{ booking.package }}</span>
                                             <span v-if="booking.addons" class="block text-gray-400 text-xs leading-tight mt-0.5">
                                                 + {{ booking.addons }}
                                             </span>
                                         </td>
-                                        <td class="px-3 py-2.5 text-xs font-semibold text-black whitespace-nowrap">
+                                        <td class="px-3 py-2.5 border border-stone-400 text-xs font-semibold text-black whitespace-nowrap">
                                             {{ formatAmount(booking.amount) }}
                                         </td>
-                                        <td class="px-3 py-2.5 text-xs whitespace-nowrap">
+                                        <td class="px-3 py-2.5 border border-stone-400 text-xs whitespace-nowrap">
                                             <span class="text-black font-medium">{{ booking.payment_method }}</span>
                                             <span class="block text-gray-400 text-xs">{{ booking.payment_ref }}</span>
                                         </td>
-                                        <td class="px-3 py-2.5 text-xs whitespace-nowrap">
+                                        <td class="px-3 py-2.5 border border-stone-400 text-xs whitespace-nowrap">
                                             <span class="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize"
                                                 :class="statusConfig[booking.status]?.classes ?? 'bg-gray-100 text-gray-600'">
                                                 {{ statusConfig[booking.status]?.label ?? booking.status }}
