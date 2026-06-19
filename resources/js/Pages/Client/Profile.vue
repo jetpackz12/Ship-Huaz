@@ -4,8 +4,10 @@ import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
+import Table from "@/Components/Table.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
-import { ref, computed, watch } from "vue";
+import { ref } from "vue";
+import { useFormatter } from "@/Composables/useFormatter";
 
 const user = usePage().props.auth.user;
 
@@ -38,7 +40,19 @@ const submitCredentials = () => {
 // --- Booking History ---
 
 // Replace this with real data passed via Inertia props: defineProps({ bookings: Array })
-const bookings = ref([
+const bookingColumns = [
+    { key: "ref", label: "Booking Ref", slot: "ref" },
+    { key: "event", label: "Event" },
+    { key: "date", label: "Date", slot: "date" },
+    { key: "time", label: "Time" },
+    { key: "package", label: "Package", slot: "package" },
+    { key: "amount", label: "Amount", slot: "amount" },
+    { key: "payment_method", label: "Payment", slot: "payment" },
+    { key: "status", label: "Status", slot: "status" },
+    { key: "actions", label: "Action", slot: "actions" },
+];
+
+const tableData = ref([
     {
         ref: "BSH-QYQ70ZOW",
         event: "Birthday Party",
@@ -185,134 +199,27 @@ const bookings = ref([
     },
 ]);
 
-// --- Search & Filter ---
-const searchQuery = ref("");
-const filterStatus = ref("all");
-const filterEvent = ref("all");
-const dateFrom = ref("");
-const dateTo = ref("");
-
-// --- Pagination ---
-const currentPage = ref(1);
-const perPage = ref(5);
-const perPageOptions = [5, 10, 25, 50];
-
-const uniqueEvents = computed(() => {
-    const events = [...new Set(bookings.value.map((b) => b.event))];
-    return events.sort();
-});
-
-const statusOptions = [
-    { value: "all", label: "All Statuses" },
-    { value: "paid", label: "Paid" },
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "cancelled", label: "Cancelled" },
-];
-
-const filteredBookings = computed(() => {
-    return bookings.value.filter((b) => {
-        const query = searchQuery.value.toLowerCase();
-        const matchesSearch =
-            !query ||
-            b.ref.toLowerCase().includes(query) ||
-            b.event.toLowerCase().includes(query) ||
-            b.package.toLowerCase().includes(query) ||
-            b.payment_method.toLowerCase().includes(query) ||
-            b.payment_ref.toLowerCase().includes(query);
-
-        const matchesStatus =
-            filterStatus.value === "all" || b.status === filterStatus.value;
-
-        const matchesEvent =
-            filterEvent.value === "all" || b.event === filterEvent.value;
-
-        const bookingDate = new Date(b.date);
-        const matchesFrom =
-            !dateFrom.value || bookingDate >= new Date(dateFrom.value);
-        const matchesTo =
-            !dateTo.value || bookingDate <= new Date(dateTo.value);
-
-        return matchesSearch && matchesStatus && matchesEvent && matchesFrom && matchesTo;
-    });
-});
-
-// Reset to page 1 when filters/search/perPage changes
-watch([searchQuery, filterStatus, filterEvent, dateFrom, dateTo, perPage], () => {
-    currentPage.value = 1;
-});
-
-const totalPages = computed(() => Math.ceil(filteredBookings.value.length / perPage.value) || 1);
-
-const paginatedBookings = computed(() => {
-    const start = (currentPage.value - 1) * perPage.value;
-    return filteredBookings.value.slice(start, start + perPage.value);
-});
-
-// Visible page numbers (max 5 shown at a time)
-const visiblePages = computed(() => {
-    const total = totalPages.value;
-    const current = currentPage.value;
-    const delta = 2;
-    const pages = [];
-
-    const start = Math.max(1, current - delta);
-    const end = Math.min(total, current + delta);
-
-    if (start > 1) pages.push(1);
-    if (start > 2) pages.push("...");
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (end < total - 1) pages.push("...");
-    if (end < total) pages.push(total);
-
-    return pages;
-});
-
-const goToPage = (page) => {
-    if (typeof page === "number") currentPage.value = page;
-};
-
-const clearFilters = () => {
-    searchQuery.value = "";
-    filterStatus.value = "all";
-    filterEvent.value = "all";
-    dateFrom.value = "";
-    dateTo.value = "";
-};
-
-const hasActiveFilters = computed(() => {
-    return (
-        searchQuery.value ||
-        filterStatus.value !== "all" ||
-        filterEvent.value !== "all" ||
-        dateFrom.value ||
-        dateTo.value
-    );
-});
-
 const statusConfig = {
-    paid:      { label: "Paid",      classes: "bg-green-100 text-green-700 border border-green-200" },
-    pending:   { label: "Pending",   classes: "bg-yellow-100 text-yellow-700 border border-yellow-200" },
-    confirmed: { label: "Confirmed", classes: "bg-blue-100 text-blue-700 border border-blue-200" },
-    cancelled: { label: "Cancelled", classes: "bg-red-100 text-red-700 border border-red-200" },
+    paid: {
+        label: "Paid",
+        classes: "bg-green-100 text-green-700 border border-green-200",
+    },
+    pending: {
+        label: "Pending",
+        classes: "bg-yellow-100 text-yellow-700 border border-yellow-200",
+    },
+    confirmed: {
+        label: "Confirmed",
+        classes: "bg-blue-100 text-blue-700 border border-blue-200",
+    },
+    cancelled: {
+        label: "Cancelled",
+        classes: "bg-red-100 text-red-700 border border-red-200",
+    },
 };
 
-const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
-};
+const { formatDate, formatAmount } = useFormatter();
 
-const formatAmount = (amount) => {
-    return new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-        minimumFractionDigits: 0,
-    }).format(amount);
-};
-
-// Range info e.g. "Showing 1–5 of 12"
-const rangeStart = computed(() => filteredBookings.value.length === 0 ? 0 : (currentPage.value - 1) * perPage.value + 1);
-const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, filteredBookings.value.length));
 </script>
 
 <template>
@@ -321,193 +228,81 @@ const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, fi
     <AuthenticatedLayout>
         <div class="flex flex-col sm:flex-row gap-3 mx-auto">
             <!-- Left Column: Information & Credentials -->
-             
-            <div class="w-full sm:w-2/3">
-                <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg h-full">
-                    <div class="p-6 text-gray-900">
 
+            <div class="w-full sm:w-2/3">
+                <div
+                    class="overflow-hidden bg-white shadow-sm sm:rounded-lg max-h-full overflow-y-auto"
+                >
+                    <div class="p-6 text-gray-900">
                         <!-- Header -->
                         <div class="flex items-center mb-4">
                             <h1 class="sm:text-xl font-bold">
-                                <font-awesome-icon icon="fa-solid fa-clock-rotate-left" />
+                                <font-awesome-icon
+                                    icon="fa-solid fa-clock-rotate-left"
+                                />
                                 Booking History
                             </h1>
                         </div>
 
-                        <!-- Search & Filters -->
-                        <div class="space-y-2 mb-2">
-                            <!-- Filter Row -->
-                            <div class="flex flex-wrap gap-2">
-                                <select v-model="filterStatus"
-                                    class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700">
-                                    <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-                                        {{ opt.label }}
-                                    </option>
-                                </select>
-
-                                <select v-model="filterEvent"
-                                    class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700">
-                                    <option value="all">All Events</option>
-                                    <option v-for="event in uniqueEvents" :key="event" :value="event">{{ event }}</option>
-                                </select>
-
-                                <div class="flex items-center gap-1 w-full sm:w-auto">
-                                    <span class="text-xs text-gray-500">From</span>
-                                    <input v-model="dateFrom" type="date"
-                                        class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700" />
-                                </div>
-
-                                <div class="flex items-center gap-1 w-full sm:w-auto">
-                                    <span class="text-xs text-gray-500">To</span>
-                                    <input v-model="dateTo" type="date"
-                                        class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700" />
-                                </div>
-
-                                <button v-if="hasActiveFilters" @click="clearFilters"
-                                    class="text-xs text-red-500 hover:text-red-700 gap-1 px-2 py-1.5 w-full sm:w-auto rounded-md border border-red-200 hover:bg-red-50 transition-colors">
-                                    <font-awesome-icon icon="fa-solid fa-xmark" />
-                                    Clear
-                                </button>
-                            </div>
-
-                           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <!-- Search Bar -->
-                                <div class="relative sm:w-2/3">
-                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
-                                        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="text-xs" />
-                                    </span>
-                                    <input v-model="searchQuery" type="text"
-                                        placeholder="Search by reference, event, package, or payment..."
-                                        class="w-full pl-8 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
-                                </div>
-                                
-                                <!-- Per-page selector -->
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs text-gray-500">Show</span>
-                                    <select
-                                        v-model="perPage"
-                                        class="text-xs border border-gray-300 rounded-md py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
-                                    >
-                                        <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}</option>
-                                    </select>
-                                    <span class="text-xs text-gray-500">per page</span>
-                                </div>
-                           </div>
-                        </div>
-
                         <!-- Table -->
-                        <div class="overflow-x-auto rounded-md border border-gray-200">
-                            <table class="w-full text-center text-sm">
-                                <thead>
-                                    <tr class="bg-navy border-b border-gold">
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Booking Ref</th>
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Event</th>
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Date</th>
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Time</th>
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Package</th>
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Amount</th>
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Payment</th>
-                                        <th class="px-3 py-3 border border-stone-400 text-xs font-semibold text-gold uppercase tracking-wider whitespace-nowrap">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100 bg-white text-gray-700">
-                                    <tr v-for="booking in paginatedBookings" :key="booking.ref"
-                                        class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-3 py-2.5 border border-stone-400 font-mono text-xs text-blue-900 font-semibold whitespace-nowrap">
-                                            {{ booking.ref }}
-                                        </td>
-                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black whitespace-nowrap">{{ booking.event }}</td>
-                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black whitespace-nowrap">{{ formatDate(booking.date) }}</td>
-                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black whitespace-nowrap">{{ booking.time }}</td>
-                                        <td class="px-3 py-2.5 border border-stone-400 text-xs text-black text-left max-w-[200px]">
-                                            <span class="font-medium">{{ booking.package }}</span>
-                                            <span v-if="booking.addons" class="block text-gray-400 text-xs leading-tight mt-0.5">
-                                                + {{ booking.addons }}
-                                            </span>
-                                        </td>
-                                        <td class="px-3 py-2.5 border border-stone-400 text-xs font-semibold text-black whitespace-nowrap">
-                                            {{ formatAmount(booking.amount) }}
-                                        </td>
-                                        <td class="px-3 py-2.5 border border-stone-400 text-xs whitespace-nowrap">
-                                            <span class="text-black font-medium">{{ booking.payment_method }}</span>
-                                            <span class="block text-gray-400 text-xs">{{ booking.payment_ref }}</span>
-                                        </td>
-                                        <td class="px-3 py-2.5 border border-stone-400 text-xs whitespace-nowrap">
-                                            <span class="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize"
-                                                :class="statusConfig[booking.status]?.classes ?? 'bg-gray-100 text-gray-600'">
-                                                {{ statusConfig[booking.status]?.label ?? booking.status }}
-                                            </span>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Empty State -->
-                                    <tr v-if="paginatedBookings.length === 0">
-                                        <td colspan="8" class="py-10 text-center text-gray-400">
-                                            <font-awesome-icon icon="fa-solid fa-calendar-xmark" class="text-2xl mb-2 block mx-auto" />
-                                            <p class="text-sm font-medium">No bookings found</p>
-                                            <p class="text-xs mt-1">Try adjusting your search or filters.</p>
-                                            <button v-if="hasActiveFilters" @click="clearFilters"
-                                                class="mt-3 text-xs text-blue-600 hover:underline">
-                                                Clear all filters
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Pagination Footer -->
-                        <div v-if="filteredBookings.length > 0"
-                            class="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3">
-
-                            <!-- Range info -->
-                            <p class="text-xs text-gray-500">
-                                Showing <span class="font-semibold text-gray-700">{{ rangeStart }}–{{ rangeEnd }}</span>
-                                of <span class="font-semibold text-gray-700">{{ filteredBookings.length }}</span> bookings
-                            </p>
-
-                            <!-- Page buttons -->
-                            <div class="flex items-center gap-1">
-                                <!-- Prev -->
-                                <button
-                                    @click="currentPage--"
-                                    :disabled="currentPage === 1"
-                                    class="px-2 py-1 rounded-md border text-xs transition-colors"
-                                    :class="currentPage === 1
-                                        ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-                                        : 'border-gray-300 text-gray-600 hover:bg-gray-100'"
+                        <Table :data="tableData" :columns="bookingColumns">
+                            <template #ref="{ value }">
+                                <span
+                                    class="font-mono text-xs text-blue-900 font-semibold"
+                                    >{{ value }}</span
                                 >
-                                    <font-awesome-icon icon="fa-solid fa-chevron-left" />
-                                </button>
+                            </template>
 
-                                <!-- Page numbers -->
-                                <template v-for="(page, i) in visiblePages" :key="i">
-                                    <span v-if="page === '...'" class="px-1.5 py-1 text-xs text-gray-400">…</span>
-                                    <button v-else
-                                        @click="goToPage(page)"
-                                        class="min-w-[28px] px-2 py-1 rounded-md border text-xs font-medium transition-colors"
-                                        :class="page === currentPage
-                                            ? 'bg-navy text-gold border-navy'
-                                            : 'border-gray-300 text-gray-600 hover:bg-gray-100'"
-                                    >
-                                        {{ page }}
-                                    </button>
-                                </template>
+                            <template #date="{ value }">
+                                {{ formatDate(value) }}
+                            </template>
 
-                                <!-- Next -->
-                                <button
-                                    @click="currentPage++"
-                                    :disabled="currentPage === totalPages"
-                                    class="px-2 py-1 rounded-md border text-xs transition-colors"
-                                    :class="currentPage === totalPages
-                                        ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-                                        : 'border-gray-300 text-gray-600 hover:bg-gray-100'"
+                            <template #package="{ row }">
+                                <span class="font-medium">{{
+                                    row.package
+                                }}</span>
+                                <span
+                                    v-if="row.addons"
+                                    class="block text-gray-400 text-xs mt-0.5"
                                 >
-                                    <font-awesome-icon icon="fa-solid fa-chevron-right" />
-                                </button>
-                            </div>
-                        </div>
+                                    + {{ row.addons }}
+                                </span>
+                            </template>
 
+                            <template #amount="{ value }">
+                                {{ formatAmount(value) }}
+                            </template>
+
+                            <template #payment="{ row }">
+                                <span class="font-medium">{{
+                                    row.payment_method
+                                }}</span>
+                                <span class="block text-gray-400 text-xs">{{
+                                    row.payment_ref
+                                }}</span>
+                            </template>
+
+                            <template #status="{ value }">
+                                <span
+                                    class="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize"
+                                    :class="
+                                        statusConfig[value]?.classes ??
+                                        'bg-gray-100 text-gray-600'
+                                    "
+                                >
+                                    {{ statusConfig[value]?.label ?? value }}
+                                </span>
+                            </template>
+
+                            <template #actions="{ row }">
+                                <button
+                                    @click="viewBooking(row)"
+                                    class="text-xs text-blue-600 hover:underline"
+                                >
+                                    View
+                                </button>
+                            </template>
+                        </Table>
                     </div>
                 </div>
             </div>
@@ -521,53 +316,139 @@ const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, fi
                         </h1>
                         <form @submit.prevent="submitInformation">
                             <div class="mt-3">
-                                <InputLabel for="first_name" value="First Name" />
-                                <TextInput id="first_name" type="text" class="mt-1 block w-full"
-                                    v-model="user_information.first_name" required autocomplete="first_name"
-                                    placeholder="e.g. Alex" />
-                                <InputError class="mt-2" :message="user_information.errors.first_name" />
+                                <InputLabel
+                                    for="first_name"
+                                    value="First Name"
+                                />
+                                <TextInput
+                                    id="first_name"
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    v-model="user_information.first_name"
+                                    required
+                                    autocomplete="first_name"
+                                    placeholder="e.g. Alex"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="
+                                        user_information.errors.first_name
+                                    "
+                                />
                             </div>
                             <div class="mt-3">
-                                <InputLabel for="middle_name" value="Middle Name" />
-                                <TextInput id="middle_name" type="text" class="mt-1 block w-full"
-                                    v-model="user_information.middle_name" required autocomplete="middle_name"
-                                    placeholder="e.g. Alexey" />
-                                <InputError class="mt-2" :message="user_information.errors.middle_name" />
+                                <InputLabel
+                                    for="middle_name"
+                                    value="Middle Name"
+                                />
+                                <TextInput
+                                    id="middle_name"
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    v-model="user_information.middle_name"
+                                    required
+                                    autocomplete="middle_name"
+                                    placeholder="e.g. Alexey"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="
+                                        user_information.errors.middle_name
+                                    "
+                                />
                             </div>
                             <div class="mt-3">
                                 <InputLabel for="last_name" value="Last Name" />
-                                <TextInput id="last_name" type="text" class="mt-1 block w-full"
-                                    v-model="user_information.last_name" required autocomplete="last_name"
-                                    placeholder="e.g. Doe" />
-                                <InputError class="mt-2" :message="user_information.errors.last_name" />
+                                <TextInput
+                                    id="last_name"
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    v-model="user_information.last_name"
+                                    required
+                                    autocomplete="last_name"
+                                    placeholder="e.g. Doe"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="user_information.errors.last_name"
+                                />
                             </div>
                             <div class="mt-3">
-                                <InputLabel for="birth_date" value="Birth Date" />
-                                <TextInput id="birth_date" type="date" class="mt-1 block w-full"
-                                    v-model="user_information.birth_date" required autocomplete="birth_date" />
-                                <InputError class="mt-2" :message="user_information.errors.birth_date" />
+                                <InputLabel
+                                    for="birth_date"
+                                    value="Birth Date"
+                                />
+                                <TextInput
+                                    id="birth_date"
+                                    type="date"
+                                    class="mt-1 block w-full"
+                                    v-model="user_information.birth_date"
+                                    required
+                                    autocomplete="birth_date"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="
+                                        user_information.errors.birth_date
+                                    "
+                                />
                             </div>
                             <div class="mt-3">
                                 <InputLabel for="phone" value="Phone" />
-                                <TextInput id="phone" type="number" class="mt-1 block w-full"
-                                    v-model="user_information.phone" required autocomplete="phone"
-                                    placeholder="e.g. 9123456789" />
-                                <InputError class="mt-2" :message="user_information.errors.phone" />
+                                <TextInput
+                                    id="phone"
+                                    type="number"
+                                    class="mt-1 block w-full"
+                                    v-model="user_information.phone"
+                                    required
+                                    autocomplete="phone"
+                                    placeholder="e.g. 9123456789"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="user_information.errors.phone"
+                                />
                             </div>
                             <div class="mt-3">
                                 <InputLabel for="address" value="Address" />
-                                <TextInput id="address" type="text" class="mt-1 block w-full"
-                                    v-model="user_information.address" required autocomplete="address"
-                                    placeholder="e.g. Pob. Talibon, Bohol" />
-                                <InputError class="mt-2" :message="user_information.errors.address" />
+                                <TextInput
+                                    id="address"
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    v-model="user_information.address"
+                                    required
+                                    autocomplete="address"
+                                    placeholder="e.g. Pob. Talibon, Bohol"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="user_information.errors.address"
+                                />
                             </div>
                             <div class="mt-3 flex items-center justify-center">
-                                <PrimaryButton :class="{ 'opacity-25': user_information.processing }"
-                                    :disabled="user_information.processing || user_credentials.processing">
-                                    <div class="text-sm" v-if="user_information.processing">
-                                        <font-awesome-icon icon="fa-solid fa-spinner" spin />
+                                <PrimaryButton
+                                    :class="{
+                                        'opacity-25':
+                                            user_information.processing,
+                                    }"
+                                    :disabled="
+                                        user_information.processing ||
+                                        user_credentials.processing
+                                    "
+                                >
+                                    <div
+                                        class="text-sm"
+                                        v-if="user_information.processing"
+                                    >
+                                        <font-awesome-icon
+                                            icon="fa-solid fa-spinner"
+                                            spin
+                                        />
                                     </div>
-                                    <font-awesome-icon class="mx-1" icon="fa-solid fa-paper-plane" />
+                                    <font-awesome-icon
+                                        class="mx-1"
+                                        icon="fa-solid fa-paper-plane"
+                                    />
                                     Save Information
                                 </PrimaryButton>
                             </div>
@@ -575,7 +456,9 @@ const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, fi
                     </div>
                 </div>
 
-                <div class="overflow-hidden bg-white mt-4 shadow-sm sm:rounded-lg">
+                <div
+                    class="overflow-hidden bg-white mt-4 shadow-sm sm:rounded-lg"
+                >
                     <div class="p-6 text-gray-900">
                         <h1 class="sm:text-xl font-bold">
                             <font-awesome-icon icon="fa-solid fa-id-card" />
@@ -584,31 +467,80 @@ const rangeEnd   = computed(() => Math.min(currentPage.value * perPage.value, fi
                         <form @submit.prevent="submitCredentials">
                             <div class="mt-3">
                                 <InputLabel for="email" value="Email" />
-                                <TextInput id="email" type="email" class="mt-1 block w-full"
-                                    v-model="user_credentials.email" required autocomplete="username"
-                                    placeholder="e.g. alex@gmail.com" />
-                                <InputError class="mt-2" :message="user_credentials.errors.email" />
+                                <TextInput
+                                    id="email"
+                                    type="email"
+                                    class="mt-1 block w-full"
+                                    v-model="user_credentials.email"
+                                    required
+                                    autocomplete="username"
+                                    placeholder="e.g. alex@gmail.com"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="user_credentials.errors.email"
+                                />
                             </div>
                             <div class="mt-3">
                                 <InputLabel for="password" value="Password" />
-                                <TextInput id="password" type="password" class="mt-1 block w-full"
-                                    v-model="user_credentials.password" autocomplete="new-password" />
-                                <InputError class="mt-2" :message="user_credentials.errors.password" />
+                                <TextInput
+                                    id="password"
+                                    type="password"
+                                    class="mt-1 block w-full"
+                                    v-model="user_credentials.password"
+                                    autocomplete="new-password"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="user_credentials.errors.password"
+                                />
                             </div>
                             <div class="mt-3">
-                                <InputLabel for="password_confirmation" value="Confirm Password" />
-                                <TextInput id="password_confirmation" type="password" class="mt-1 block w-full"
-                                    v-model="user_credentials.password_confirmation" autocomplete="new-password" />
-                                <InputError class="mt-2"
-                                    :message="user_credentials.errors.password_confirmation" />
+                                <InputLabel
+                                    for="password_confirmation"
+                                    value="Confirm Password"
+                                />
+                                <TextInput
+                                    id="password_confirmation"
+                                    type="password"
+                                    class="mt-1 block w-full"
+                                    v-model="
+                                        user_credentials.password_confirmation
+                                    "
+                                    autocomplete="new-password"
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="
+                                        user_credentials.errors
+                                            .password_confirmation
+                                    "
+                                />
                             </div>
                             <div class="mt-3 flex items-center justify-center">
-                                <PrimaryButton :class="{ 'opacity-25': user_credentials.processing }"
-                                    :disabled="user_credentials.processing || user_information.processing">
-                                    <div class="text-sm" v-if="user_credentials.processing">
-                                        <font-awesome-icon icon="fa-solid fa-spinner" spin />
+                                <PrimaryButton
+                                    :class="{
+                                        'opacity-25':
+                                            user_credentials.processing,
+                                    }"
+                                    :disabled="
+                                        user_credentials.processing ||
+                                        user_information.processing
+                                    "
+                                >
+                                    <div
+                                        class="text-sm"
+                                        v-if="user_credentials.processing"
+                                    >
+                                        <font-awesome-icon
+                                            icon="fa-solid fa-spinner"
+                                            spin
+                                        />
                                     </div>
-                                    <font-awesome-icon class="me-1" icon="fa-solid fa-paper-plane" />
+                                    <font-awesome-icon
+                                        class="me-1"
+                                        icon="fa-solid fa-paper-plane"
+                                    />
                                     Save Credentials
                                 </PrimaryButton>
                             </div>
