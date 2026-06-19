@@ -39,8 +39,7 @@ const submitCredentials = () => {
 
 // --- Booking History ---
 
-// Replace this with real data passed via Inertia props: defineProps({ bookings: Array })
-const bookingColumns = [
+const TableColumns = [
     { key: "ref", label: "Booking Ref", slot: "ref" },
     { key: "event", label: "Event" },
     { key: "date", label: "Date", slot: "date" },
@@ -49,7 +48,6 @@ const bookingColumns = [
     { key: "amount", label: "Amount", slot: "amount" },
     { key: "payment_method", label: "Payment", slot: "payment" },
     { key: "status", label: "Status", slot: "status" },
-    { key: "actions", label: "Action", slot: "actions" },
 ];
 
 const tableData = ref([
@@ -245,7 +243,7 @@ const { formatDate, formatAmount } = useFormatter();
                         </div>
 
                         <!-- Table -->
-                        <Table :data="tableData" :columns="bookingColumns">
+                        <Table :data="tableData" :columns="TableColumns">
                             <template #ref="{ value }">
                                 <span
                                     class="font-mono text-xs text-blue-900 font-semibold"
@@ -263,7 +261,7 @@ const { formatDate, formatAmount } = useFormatter();
                                 }}</span>
                                 <span
                                     v-if="row.addons"
-                                    class="block text-gray-400 text-xs mt-0.5"
+                                    class="block text-wrap text-gray-400 text-xs mt-0.5"
                                 >
                                     + {{ row.addons }}
                                 </span>
@@ -292,15 +290,6 @@ const { formatDate, formatAmount } = useFormatter();
                                 >
                                     {{ statusConfig[value]?.label ?? value }}
                                 </span>
-                            </template>
-
-                            <template #actions="{ row }">
-                                <button
-                                    @click="viewBooking(row)"
-                                    class="text-xs text-blue-600 hover:underline"
-                                >
-                                    View
-                                </button>
                             </template>
                         </Table>
                     </div>
