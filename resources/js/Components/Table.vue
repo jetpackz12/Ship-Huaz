@@ -2,14 +2,20 @@
 import { ref, computed, watch } from "vue";
 
 const props = defineProps({
-    data: { type: Array, required: true }, // renamed from `bookings`
+    data: { type: Array, required: true },
     columns: { type: Array, required: true },
+    tableActions: {
+        type: Object,
+        default: () => ({
+            isDateFilterShow: true,
+            isPerPageShow: true,
+            isSearchShow: true,
+        }),
+    },
 });
 
 // --- Search & Filter ---
 const searchQuery = ref("");
-const filterStatus = ref("all");
-const filterEvent = ref("all");
 const dateFrom = ref("");
 const dateTo = ref("");
 
@@ -17,19 +23,6 @@ const dateTo = ref("");
 const currentPage = ref(1);
 const perPage = ref(5);
 const perPageOptions = [5, 10, 25];
-
-const uniqueEvents = computed(() => {
-    const events = [...new Set(props.data.map((b) => b.event))];
-    return events.sort();
-});
-
-const statusOptions = [
-    { value: "all", label: "All Statuses" },
-    { value: "paid", label: "Paid" },
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "cancelled", label: "Cancelled" },
-];
 
 const filteredBookings = computed(() => {
     return props.data.filter((b) => {
@@ -42,35 +35,20 @@ const filteredBookings = computed(() => {
             b.payment_method.toLowerCase().includes(query) ||
             b.payment_ref.toLowerCase().includes(query);
 
-        const matchesStatus =
-            filterStatus.value === "all" || b.status === filterStatus.value;
-
-        const matchesEvent =
-            filterEvent.value === "all" || b.event === filterEvent.value;
-
         const bookingDate = new Date(b.date);
         const matchesFrom =
             !dateFrom.value || bookingDate >= new Date(dateFrom.value);
         const matchesTo =
             !dateTo.value || bookingDate <= new Date(dateTo.value);
 
-        return (
-            matchesSearch &&
-            matchesStatus &&
-            matchesEvent &&
-            matchesFrom &&
-            matchesTo
-        );
+        return matchesSearch && matchesFrom && matchesTo;
     });
 });
 
 // Reset to page 1 when filters/search/perPage changes
-watch(
-    [searchQuery, filterStatus, filterEvent, dateFrom, dateTo, perPage],
-    () => {
-        currentPage.value = 1;
-    },
-);
+watch([searchQuery, dateFrom, dateTo, perPage], () => {
+    currentPage.value = 1;
+});
 
 const totalPages = computed(
     () => Math.ceil(filteredBookings.value.length / perPage.value) || 1,
@@ -106,20 +84,12 @@ const goToPage = (page) => {
 
 const clearFilters = () => {
     searchQuery.value = "";
-    filterStatus.value = "all";
-    filterEvent.value = "all";
     dateFrom.value = "";
     dateTo.value = "";
 };
 
 const hasActiveFilters = computed(() => {
-    return (
-        searchQuery.value ||
-        filterStatus.value !== "all" ||
-        filterEvent.value !== "all" ||
-        dateFrom.value ||
-        dateTo.value
-    );
+    return searchQuery.value || dateFrom.value || dateTo.value;
 });
 
 // Range info e.g. "Showing 1–5 of 12"
@@ -135,68 +105,57 @@ const rangeEnd = computed(() =>
 <template>
     <!-- Search & Filters -->
     <div class="space-y-2 mb-2">
-        <!-- Filter Row -->
-        <div class="flex flex-wrap gap-2">
-            <select
-                v-model="filterStatus"
-                class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
-            >
-                <option
-                    v-for="opt in statusOptions"
-                    :key="opt.value"
-                    :value="opt.value"
-                >
-                    {{ opt.label }}
-                </option>
-            </select>
+        <div
+            class="flex flex-col gap-2 sm:flex-row sm:items-center justify-between"
+        >
+            <!-- Filter Row -->
+            <div class="flex flex-wrap gap-2" v-if="tableActions.isDateFilterShow">
+                <div class="flex items-center gap-1 w-full sm:w-auto">
+                    <span class="text-xs text-gray-500">From</span>
+                    <input
+                        v-model="dateFrom"
+                        type="date"
+                        class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
+                    />
+                </div>
 
-            <select
-                v-model="filterEvent"
-                class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
-            >
-                <option value="all">All Events</option>
-                <option
-                    v-for="event in uniqueEvents"
-                    :key="event"
-                    :value="event"
-                >
-                    {{ event }}
-                </option>
-            </select>
+                <div class="flex items-center gap-1 w-full sm:w-auto">
+                    <span class="text-xs text-gray-500">To</span>
+                    <input
+                        v-model="dateTo"
+                        type="date"
+                        class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
+                    />
+                </div>
 
-            <div class="flex items-center gap-1 w-full sm:w-auto">
-                <span class="text-xs text-gray-500">From</span>
-                <input
-                    v-model="dateFrom"
-                    type="date"
-                    class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
-                />
+                <button
+                    v-if="hasActiveFilters"
+                    @click="clearFilters"
+                    class="text-xs text-red-500 hover:text-red-700 gap-1 px-2 py-1.5 w-full sm:w-auto rounded-md border border-red-200 hover:bg-red-50 transition-colors"
+                >
+                    <font-awesome-icon icon="fa-solid fa-xmark" />
+                    Clear
+                </button>
             </div>
 
-            <div class="flex items-center gap-1 w-full sm:w-auto">
-                <span class="text-xs text-gray-500">To</span>
-                <input
-                    v-model="dateTo"
-                    type="date"
-                    class="text-xs border border-gray-300 rounded-md py-1.5 w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
-                />
+            <!-- Per-page selector -->
+            <div class="flex items-center gap-2" v-if="tableActions.isPerPageShow">
+                <span class="text-xs text-gray-500">Show</span>
+                <select
+                    v-model="perPage"
+                    class="text-xs border border-gray-300 rounded-md py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
+                >
+                    <option v-for="n in perPageOptions" :key="n" :value="n">
+                        {{ n }}
+                    </option>
+                </select>
+                <span class="text-xs text-gray-500">per page</span>
             </div>
-
-            <button
-                v-if="hasActiveFilters"
-                @click="clearFilters"
-                class="text-xs text-red-500 hover:text-red-700 gap-1 px-2 py-1.5 w-full sm:w-auto rounded-md border border-red-200 hover:bg-red-50 transition-colors"
-            >
-                <font-awesome-icon icon="fa-solid fa-xmark" />
-                Clear
-            </button>
         </div>
 
-        <div
-            class="flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-        >
+        <div class="flex items-center">
             <!-- Search Bar -->
-            <div class="relative sm:w-2/3">
+            <div class="relative w-full" v-if="tableActions.isSearchShow">
                 <span
                     class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none"
                 >
@@ -208,23 +167,9 @@ const rangeEnd = computed(() =>
                 <input
                     v-model="searchQuery"
                     type="text"
-                    placeholder="Search by reference, event, package, or payment..."
+                    placeholder="Search..."
                     class="w-full pl-8 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
-            </div>
-
-            <!-- Per-page selector -->
-            <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-500">Show</span>
-                <select
-                    v-model="perPage"
-                    class="text-xs border border-gray-300 rounded-md py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
-                >
-                    <option v-for="n in perPageOptions" :key="n" :value="n">
-                        {{ n }}
-                    </option>
-                </select>
-                <span class="text-xs text-gray-500">per page</span>
             </div>
         </div>
     </div>
