@@ -22,7 +22,7 @@ const sidebarMenus = [
     {
         menuName: "Profile",
         route: route("client.profile.index"),
-        icon: "fa-solid fa-user-edit",
+        icon: "fa-solid fa-image-portrait",
     },
 ];
 
