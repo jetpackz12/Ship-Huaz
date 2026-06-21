@@ -31,12 +31,56 @@ Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('clien
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+    Route::get('/bookings', function () {
+        return Inertia::render('Admin/Bookings');
+    })->name('bookings');
+
+    Route::get('/time-slots', function () {
+        return Inertia::render('Admin/TimeSlots');
+    })->name('time-slots');
+
+    Route::get('/event-types', function () {
+        return Inertia::render('Admin/EventTypes');
+    })->name('event-types');
+
+    Route::get('/venue-packages', function () {
+        return Inertia::render('Admin/VenuePackages');
+    })->name('venue-packages');
+
+    Route::get('/package-add-ons', function () {
+        return Inertia::render('Admin/PackageAddOns');
+    })->name('package-add-ons');
+
+    Route::get('/payment-options', function () {
+        return Inertia::render('Admin/PaymentOptions');
+    })->name('payment-options');
+
+    Route::get('/messages', function () {
+        return Inertia::render('Admin/Messages');
+    })->name('messages');
+
+    Route::get('/clients', function () {
+        return Inertia::render('Admin/Clients');
+    })->name('clients');
+
+    Route::get('/chat-nodes', function () {
+        return Inertia::render('Admin/ChatNodes');
+    })->name('chat-nodes');
+
+    Route::get('/chat-node-options', function () {
+        return Inertia::render('Admin/ChatNodeOptions');
+    })->name('chat-node-options');
+
+    Route::get('/profile', function () {
+        return Inertia::render('Admin/Profile');
+    })->name('profile');
 });
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
+// Route::middleware('auth')->group(function () {
+//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// });
 
 require __DIR__ . '/auth.php';
