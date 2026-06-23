@@ -238,6 +238,15 @@ const toggleSubmenu = (menuName) => {
                         Profile
                     </Link>
                     <Link
+                        :href="route('landing-page')"
+                        method="get"
+                        as="button"
+                        class="px-4 py-2 text-navy bg-brass hover:bg-gold rounded-lg transition"
+                    >
+                        <font-awesome-icon icon="fa-solid fa-newspaper" />
+                        Feed
+                    </Link>
+                    <Link
                         :href="route('logout')"
                         method="post"
                         as="button"
