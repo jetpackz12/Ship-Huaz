@@ -12,6 +12,7 @@ const props = defineProps({
             isSearchShow: true,
         }),
     },
+    dateKey: { type: String, default: "date" },
 });
 
 // --- Search & Filter ---
@@ -27,19 +28,19 @@ const perPageOptions = [5, 10, 25];
 const filteredBookings = computed(() => {
     return props.data.filter((b) => {
         const query = searchQuery.value.toLowerCase();
+
+        // Dynamically search across all column keys
         const matchesSearch =
             !query ||
-            b.ref.toLowerCase().includes(query) ||
-            b.event.toLowerCase().includes(query) ||
-            b.package.toLowerCase().includes(query) ||
-            b.payment_method.toLowerCase().includes(query) ||
-            b.payment_ref.toLowerCase().includes(query);
+            props.columns.some((col) =>
+                String(b[col.key] ?? "")
+                    .toLowerCase()
+                    .includes(query),
+            );
 
-        const bookingDate = new Date(b.date);
-        const matchesFrom =
-            !dateFrom.value || bookingDate >= new Date(dateFrom.value);
-        const matchesTo =
-            !dateTo.value || bookingDate <= new Date(dateTo.value);
+        const date = new Date(b[props.dateKey]);
+        const matchesFrom = !dateFrom.value || date >= new Date(dateFrom.value);
+        const matchesTo = !dateTo.value || date <= new Date(dateTo.value);
 
         return matchesSearch && matchesFrom && matchesTo;
     });
