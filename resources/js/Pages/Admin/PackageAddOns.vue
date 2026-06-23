@@ -16,7 +16,7 @@ import { useFormatter } from "@/Composables/useFormatter";
 import { useModal } from "@/Composables/useModal";
 
 const tableColumns = [
-    { key: "id", label: "#" },
+    { key: "id", label: "ID" },
     { key: "title", label: "Title" },
     { key: "description", label: "Description" },
     { key: "price", label: "Price", slot: "price" },
