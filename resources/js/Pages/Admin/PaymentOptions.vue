@@ -11,6 +11,7 @@ import TextAreaInput from "@/Components/TextAreaInput.vue";
 import SelectInput from "@/Components/SelectInput.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import { ref } from "vue";
+import { useModal } from "@/Composables/useModal";
 
 const tableColumns = [
     { key: "id", label: "ID" },
@@ -39,7 +40,7 @@ const tableData = ref([
         account: "Butal Ship Hauz",
         description:
             "After sending, fill in your details below so we can verify your payment.",
-        status: 'inactive',
+        status: "inactive",
     },
 ]);
 
@@ -60,20 +61,24 @@ const statusConfig = {
     },
 };
 
-const isEditModalOpen = ref(false);
+const modal = useModal();
 
 const editPaymentOption = (info) => {
-    isEditModalOpen.value = true;
-
     form.payment = info.payment;
     form.number = info.number;
     form.account = info.account;
     form.description = info.description;
     form.status = info.status;
+    
+    modal.title.value = "Edit Payment Option";
+    modal.type.value = "Edit";
+    modal.icon.value = "fa-solid fa-pen-to-square";
+    modal.openModal();
 };
 
 const closeEditModal = () => {
-    isEditModalOpen.value = false;
+    form.reset();
+    modal.closeModal();
 };
 
 const statusFormat = ref([
@@ -106,11 +111,9 @@ const submit = () => {
                 <div
                     class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2"
                 >
-                    <div>
-                        <h1 class="text-xl font-bold text-stone-800">
-                            Payment Options
-                        </h1>
-                    </div>
+                    <h1 class="text-xl font-bold text-stone-800">
+                        Payment Options
+                    </h1>
                 </div>
 
                 <Table
@@ -146,15 +149,14 @@ const submit = () => {
             </div>
 
             <Modal
-                :show="isEditModalOpen"
+                :show="modal.open.value"
                 @close="closeEditModal"
                 :maxWidth="'lg'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <h2 class="text-lg font-medium text-gray-900">
-                        <font-awesome-icon icon="fa-solid fa-pen-to-square" />
-
-                        Edit Payment Option
+                        <font-awesome-icon :icon="modal.icon.value" />
+                        {{ modal.title.value }}
                     </h2>
 
                     <div class="mt-6">
@@ -255,7 +257,10 @@ const submit = () => {
                             Cancel
                         </SecondaryButton>
 
-                        <PrimaryButton class="flex items-center gap-1" @click="submit">
+                        <PrimaryButton
+                            class="flex items-center gap-1"
+                            @click="submit"
+                        >
                             Save
                             <font-awesome-icon icon="fa-solid fa-paper-plane" />
                         </PrimaryButton>
