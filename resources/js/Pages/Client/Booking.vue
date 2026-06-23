@@ -752,7 +752,7 @@ const { formatDate, formatAmount } = useFormatter();
                                 ]"
                             >
                                 <div
-                                    class="flex justify-between items-start mb-2"
+                                    class="flex justify-between items-start mb-1"
                                 >
                                     <span
                                         v-if="selectedPackage === pkg.id"
