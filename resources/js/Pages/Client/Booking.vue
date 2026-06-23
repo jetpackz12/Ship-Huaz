@@ -465,7 +465,7 @@ const { formatDate, formatAmount } = useFormatter();
 </script>
 
 <template>
-    <Head title="Event Booking – Butal Ship Hauz" />
+    <Head title="Event Booking" />
 
     <AuthenticatedLayout>
         <div class="min-h-screen">
