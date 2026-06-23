@@ -132,6 +132,15 @@ const isActive = (href) => page.url.startsWith(new URL(href).pathname);
 
                 <div class="flex items-center gap-2">
                     <Link
+                        :href="route('landing-page')"
+                        method="get"
+                        as="button"
+                        class="px-4 py-2 text-navy bg-brass hover:bg-gold rounded-lg transition"
+                    >
+                        <font-awesome-icon icon="fa-solid fa-newspaper" />
+                        Feed
+                    </Link>
+                    <Link
                         :href="route('logout')"
                         method="post"
                         as="button"
