@@ -199,20 +199,18 @@ const timeSlot = ref("");
 const today = new Date().toISOString().split("T")[0];
 
 const timeSlots = [
-    { id: "morning", label: "Morning", time: "8:00 AM – 12:00 PM", icon: "🌅" },
+    { id: "morning", label: "Morning", time: "8:00 AM – 12:00 PM" },
     {
         id: "afternoon",
         label: "Afternoon",
         time: "1:00 PM – 5:00 PM",
-        icon: "☀️",
     },
-    { id: "evening", label: "Evening", time: "6:00 PM – 10:00 PM", icon: "🌙" },
-    { id: "fullday", label: "Full Day", time: "8:00 AM – 8:00 PM", icon: "⚓" },
+    { id: "evening", label: "Evening", time: "6:00 PM – 10:00 PM" },
+    { id: "fullday", label: "Full Day", time: "8:00 AM – 8:00 PM" },
     {
         id: "overnight",
         label: "Overnight",
         time: "8:00 PM – 8:00 AM",
-        icon: "🌟",
     },
 ];
 
@@ -240,7 +238,6 @@ const packages = [
         desc: "Open-air upper deck with panoramic views. Complimentary coffee/juice included.",
         price: 3500,
         capacity: "Up to 30 guests",
-        icon: "🌊",
     },
     {
         id: "main",
@@ -248,7 +245,6 @@ const packages = [
         desc: "Spacious main deck area perfect for celebrations and gatherings.",
         price: 6500,
         capacity: "Up to 80 guests",
-        icon: "⚓",
     },
     {
         id: "fullship",
@@ -256,7 +252,6 @@ const packages = [
         desc: "Exclusive use of the entire Butal Ship Hauz — all decks, all areas.",
         price: 12000,
         capacity: "Up to 150 guests",
-        icon: "🚢",
     },
     {
         id: "overnight",
@@ -264,7 +259,6 @@ const packages = [
         desc: "Private overnight booking for intimate gatherings or special celebrations.",
         price: 18000,
         capacity: "Up to 20 guests",
-        icon: "🌟",
     },
 ];
 
@@ -274,21 +268,18 @@ const addons = [
         name: "Captain's Experience",
         desc: "Uniforms + immersive ship photo ops for all guests",
         price: 500,
-        icon: "👨‍✈️",
     },
     {
         id: "catering",
         name: "Catering Package",
         desc: "Filipino-style buffet with drinks for your group",
         price: 3500,
-        icon: "🍽️",
     },
     {
         id: "decor",
         name: "Event Decoration",
         desc: "Themed ship décor, balloons, and table setup",
         price: 2000,
-        icon: "🎊",
     },
     {
         id: "photo",
@@ -302,7 +293,6 @@ const addons = [
         name: "Sound System",
         desc: "PA system with wireless microphone and playlist setup",
         price: 1500,
-        icon: "🎵",
     },
     {
         id: "entrypass",
@@ -310,7 +300,6 @@ const addons = [
         desc: "₱50/head tour access for walk-in attendees",
         price: 50,
         perHead: true,
-        icon: "🎟️",
     },
 ];
 
@@ -765,7 +754,6 @@ const { formatDate, formatAmount } = useFormatter();
                                 <div
                                     class="flex justify-between items-start mb-2"
                                 >
-                                    <span class="text-2xl">{{ pkg.icon }}</span>
                                     <span
                                         v-if="selectedPackage === pkg.id"
                                         class="text-blue-700 text-xs font-bold bg-blue-100 px-2 py-0.5 rounded-full"
@@ -813,9 +801,6 @@ const { formatDate, formatAmount } = useFormatter();
                                     ]"
                                 >
                                     <div class="flex items-start gap-3">
-                                        <span class="text-xl flex-shrink-0">{{
-                                            addon.icon
-                                        }}</span>
                                         <div class="min-w-0 flex-1">
                                             <p
                                                 class="text-xs font-semibold text-stone-800"
