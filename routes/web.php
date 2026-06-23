@@ -13,7 +13,7 @@ Route::get('/', function () {
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
     ]);
-});
+})->name('landing-page');
 
 Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('client.')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
