@@ -17,7 +17,6 @@ const sidebarMenus = [
         icon: "fa-solid fa-book-bookmark",
         children: [
             { menuName: "Bookings", route: route("admin.bookings") },
-            { menuName: "Time Slots", route: route("admin.time-slots") },
             { menuName: "Event Types", route: route("admin.event-types") },
             {
                 menuName: "Venue Packages",
