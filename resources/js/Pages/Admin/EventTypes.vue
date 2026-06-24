@@ -294,8 +294,8 @@ const submit = () => {
                             class="flex items-center gap-1"
                             @click="submit"
                         >
-                            Detete
-                            <font-awesome-icon icon="fa-solid fa-trash" />
+                            Confirm
+                            <font-awesome-icon icon="fa-solid fa-thumbs-up" />
                         </DangerButton>
                     </div>
                 </div>
