@@ -24,8 +24,6 @@ Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('clien
 
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
-        Route::put('/update-information', [ProfileController::class, 'updateInformation'])->name('update-information');
-        Route::put('/update-credentials', [ProfileController::class, 'updateCredentials'])->name('update-credentials');
     });
 });
 
@@ -77,10 +75,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     })->name('profile');
 });
 
-// Route::middleware('auth')->group(function () {
-//     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-//     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-// });
+Route::middleware('auth')->group(function () {
+    Route::put('/update-information', [ProfileController::class, 'updateInformation'])->name('update-information');
+    Route::put('/update-credentials', [ProfileController::class, 'updateCredentials'])->name('update-credentials');
+
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 require __DIR__ . '/auth.php';
