@@ -55,7 +55,6 @@ const submit = () => {
                     type="text"
                     class="mt-1 block w-full"
                     v-model="form.middle_name"
-                    required
                     autocomplete="middle_name"
                     placeholder="e.g. Alexey"
                 />

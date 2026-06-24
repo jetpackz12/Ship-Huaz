@@ -27,11 +27,11 @@ const user_credentials = useForm({
 });
 
 const submitInformation = () => {
-    user_information.put(route("client.profile.update-information"));
+    user_information.put(route("update-information"));
 };
 
 const submitCredentials = () => {
-    user_credentials.put(route("client.profile.update-credentials"), {
+    user_credentials.put(route("update-credentials"), {
         onSuccess: () =>
             user_credentials.reset("password", "password_confirmation"),
     });
@@ -335,7 +335,6 @@ const { formatDate, formatAmount } = useFormatter();
                                     type="text"
                                     class="mt-1 block w-full"
                                     v-model="user_information.middle_name"
-                                    required
                                     autocomplete="middle_name"
                                     placeholder="e.g. Alexey"
                                 />
