@@ -41,7 +41,7 @@ class ProfileController extends Controller
     {
         $request->validate([
             'first_name' => 'required|string|max:255',
-            'middle_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
             'birth_date' => 'required|date',
             'phone' => ['required', 'regex:/^9\d{9}$/'],
@@ -56,6 +56,10 @@ class ProfileController extends Controller
             'phone' => $request->phone,
             'address' => $request->address,
         ]);
+
+        if ($request->user()->role === 'admin') {
+            return Redirect::route('admin.profile');
+        }
 
         return Redirect::route('client.profile.index');
     }
@@ -78,6 +82,10 @@ class ProfileController extends Controller
             $request->user()->update([
                 'password' => Hash::make($request->password),
             ]);
+        }
+
+        if ($request->user()->role === 'admin') {
+            return Redirect::route('admin.profile');
         }
 
         return Redirect::route('client.profile.index');
