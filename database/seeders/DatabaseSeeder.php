@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             PaymentOptionSeeder::class,
             PackageAddOnSeeder::class,
             VenuePackageSeeder::class,
+            EventTypeSeeder::class,
         ]);
     }
 }
