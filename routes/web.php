@@ -8,6 +8,7 @@ use App\Http\Controllers\PackageAddOnController;
 use App\Http\Controllers\PaymentOptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VenuePackageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -44,10 +45,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/event-types', function () {
         return Inertia::render('Admin/EventTypes');
     })->name('event-types');
-
-    Route::get('/venue-packages', function () {
-        return Inertia::render('Admin/VenuePackages');
-    })->name('venue-packages');
+    
+    Route::prefix('venue-packages')->name('venue-packages.')->group(function () {
+        Route::get('/', [VenuePackageController::class, 'index'])->name('index');
+        Route::post('/store', [VenuePackageController::class, 'store'])->name('store');
+        Route::put('/update/{id}', [VenuePackageController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [VenuePackageController::class, 'destroy'])->name('destroy');
+    });
 
     Route::prefix('package-add-ons')->name('package-add-ons.')->group(function () {
         Route::get('/', [PackageAddOnController::class, 'index'])->name('index');

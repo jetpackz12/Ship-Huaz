@@ -20,7 +20,7 @@ const sidebarMenus = [
             { menuName: "Event Types", route: route("admin.event-types") },
             {
                 menuName: "Venue Packages",
-                route: route("admin.venue-packages"),
+                route: route("admin.venue-packages.index"),
             },
             {
                 menuName: "Package Add Ons",

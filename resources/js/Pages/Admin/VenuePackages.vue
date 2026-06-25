@@ -11,9 +11,13 @@ import TextInput from "@/Components/TextInput.vue";
 import TextAreaInput from "@/Components/TextAreaInput.vue";
 import SelectInput from "@/Components/SelectInput.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
 import { useModal } from "@/Composables/useModal";
+
+const props = defineProps({
+    venuePackages: Array,
+});
 
 const tableColumns = [
     { key: "id", label: "ID" },
@@ -25,40 +29,32 @@ const tableColumns = [
     { key: "actions", label: "Actions", slot: "actions" },
 ];
 
-const tableData = ref([
-    {
-        id: 1,
-        title: "Upper Deck Experience",
-        description: "Open-air upper deck with panoramic views. Complimentary coffee/juice included.",
-        guests: 30,
-        price: 3500,
-        status: "active",
+const tableData = ref(
+    props.venuePackages.map((item, index) => ({
+        id: index + 1,
+        venue_package_id: item.id,
+        title: item.title,
+        description: item.description,
+        guests: item.guests,
+        price: item.price,
+        status: item.status,
+    })),
+);
+
+watch(
+    () => props.venuePackages,
+    (newVenuePackages) => {
+        tableData.value = newVenuePackages.map((item, index) => ({
+            id: index + 1,
+            venue_package_id: item.id,
+            title: item.title,
+            description: item.description,
+            guests: item.guests,
+            price: item.price,
+            status: item.status,
+        }));
     },
-    {
-        id: 2,
-        title: "Main Deck Venue",
-        description: "Spacious main deck area perfect for celebrations and gatherings.",
-        guests: 80,
-        price: 6500,
-        status: "active",
-    },
-    {
-        id: 3,
-        title: "Full Ship Exclusive",
-        description: "Exclusive use of the entire Butal Ship Hauz — all decks, all areas.",
-        guests: 150,
-        price: 12000,
-        status: "inactive",
-    },
-    {
-        id: 4,
-        title: "Overnight Stay Package",
-        description: "Private overnight booking for intimate gatherings or special celebrations.",
-        guests: 20,
-        price: 18000,
-        status: "active",
-    },
-]);
+);
 
 const tableActions = {
     isDateFilterShow: false,
@@ -89,7 +85,7 @@ const addModalOpen = () => {
 };
 
 const editModalOpen = (item) => {
-    form.id = item.id;
+    form.id = item.venue_package_id;
     form.title = item.title;
     form.description = item.description;
     form.guests = item.guests;
@@ -103,8 +99,8 @@ const editModalOpen = (item) => {
 };
 
 const deleteModalOpen = (item) => {
-    form.id = item.id;
-    
+    form.id = item.venue_package_id;
+
     modal.title.value = "Delete Venue Package";
     modal.type.value = "Delete";
     modal.icon.value = "fa-solid fa-trash";
@@ -132,7 +128,19 @@ const form = useForm({
 });
 
 const submit = () => {
-    console.log(form);
+    if (modal.type.value === "Add") {
+        form.post(route("admin.venue-packages.store"), {
+            onSuccess: () => modalClose(),
+        });
+    } else if (modal.type.value === "Edit") {
+        form.put(route("admin.venue-packages.update", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    } else if (modal.type.value === "Delete") {
+        form.delete(route("admin.venue-packages.destroy", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    }
 };
 </script>
 
@@ -204,8 +212,10 @@ const submit = () => {
 
             <!-- Add & Edit Modal -->
             <Modal
-                :show="modal.type.value === 'Add' || modal.type.value === 'Edit'"
-                @close="modalClose"
+                :show="
+                    modal.type.value === 'Add' || modal.type.value === 'Edit'
+                "
+                @close="!form.processing && modalClose()"
                 :maxWidth="'lg'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -224,6 +234,7 @@ const submit = () => {
                             v-model="form.title"
                             required
                             placeholder="e.g. Upper Deck Experience"
+                            @keypress.enter="submit"
                         />
 
                         <InputError :message="form.errors.title" class="mt-2" />
@@ -240,6 +251,7 @@ const submit = () => {
                             rows="4"
                             required
                             placeholder="e.g. Lorem ipsum dolor sit amet"
+                            @keypress.enter="submit"
                         />
 
                         <InputError
@@ -258,9 +270,13 @@ const submit = () => {
                             v-model="form.guests"
                             required
                             placeholder="e.g. 100"
+                            @keypress.enter="submit"
                         />
 
-                        <InputError :message="form.errors.guests" class="mt-2" />
+                        <InputError
+                            :message="form.errors.guests"
+                            class="mt-2"
+                        />
                     </div>
 
                     <div class="mt-2">
@@ -273,6 +289,7 @@ const submit = () => {
                             v-model="form.price"
                             required
                             placeholder="e.g. 1000"
+                            @keypress.enter="submit"
                         />
 
                         <InputError :message="form.errors.price" class="mt-2" />
@@ -298,15 +315,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <PrimaryButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Save
                             <font-awesome-icon icon="fa-solid fa-paper-plane" />
                         </PrimaryButton>
@@ -317,7 +344,7 @@ const submit = () => {
             <!-- Delete Modal -->
             <Modal
                 :show="modal.type.value === 'Delete'"
-                @close="modalClose"
+                @close="!form.processing && modalClose()"
                 :maxWidth="'sm'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -335,15 +362,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <DangerButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Confirm
                             <font-awesome-icon icon="fa-solid fa-thumbs-up" />
                         </DangerButton>
