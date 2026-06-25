@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PaymentOptionSeeder::class,
             PackageAddOnSeeder::class,
+            VenuePackageSeeder::class,
         ]);
     }
 }
