@@ -8,9 +8,13 @@ import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import SelectInput from "@/Components/SelectInput.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
 import { useModal } from "@/Composables/useModal";
+
+const props = defineProps({
+    users: Array,
+});
 
 const tableColumns = [
     { key: "id", label: "ID" },
@@ -26,20 +30,45 @@ const tableColumns = [
     { key: "actions", label: "Actions", slot: "actions" },
 ];
 
-const tableData = ref([
-    {
-        id: 1,
-        first_name: "John",
-        middle_name: "Doe",
-        last_name: "Doe",
-        birth_date: "1990-01-01",
-        phone: "0987654321",
-        address: "123 Main St",
-        email: "john@example.com",
-        created_at: "2026-06-23",
-        status: "active",
+const tableData = ref(
+    props.users.map((user, index) => {
+        return {
+            id: index + 1,
+            user_id: user.id,
+            email: user.email,
+            status: user.status,
+            created_at: user.created_at,
+            first_name: user.user_info?.first_name,
+            middle_name: user.user_info?.middle_name,
+            last_name: user.user_info?.last_name,
+            birth_date: user.user_info?.birth_date,
+            phone: user.user_info?.phone,
+            address: user.user_info?.address,
+        };
+    }),
+);
+
+watch(
+    () => props.users,
+    (newUsers) => {
+        tableData.value = newUsers.map((user, index) => {
+            return {
+                id: index + 1,
+                user_id: user.id,
+                email: user.email,
+                status: user.status,
+                created_at: user.created_at,
+                first_name: user.user_info?.first_name,
+                middle_name: user.user_info?.middle_name,
+                last_name: user.user_info?.last_name,
+                birth_date: user.user_info?.birth_date,
+                phone: user.user_info?.phone,
+                address: user.user_info?.address,
+            };
+        });
     },
-]);
+    { deep: true },
+);
 
 const tableActions = {
     isDateFilterShow: true,
@@ -63,6 +92,7 @@ const { formatDate } = useFormatter();
 const modal = useModal();
 
 const editModalOpen = (item) => {
+    form.id = item.user_id;
     form.status = item.status;
 
     modal.title.value = "Edit Client Status";
@@ -88,7 +118,9 @@ const form = useForm({
 });
 
 const submit = () => {
-    console.log(form);
+    form.put(route("admin.clients.update-status", form.id), {
+        onSuccess: () => modalClose(),
+    });
 };
 </script>
 
@@ -151,7 +183,7 @@ const submit = () => {
                 :show="
                     modal.type.value === 'Add' || modal.type.value === 'Edit'
                 "
-                @close="modalClose"
+                @close="!form.processing && modalClose()"
                 :maxWidth="'sm'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -180,15 +212,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <PrimaryButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Save
                             <font-awesome-icon icon="fa-solid fa-paper-plane" />
                         </PrimaryButton>

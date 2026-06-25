@@ -5,6 +5,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -58,9 +59,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         return Inertia::render('Admin/Messages');
     })->name('messages');
 
-    Route::get('/clients', function () {
-        return Inertia::render('Admin/Clients');
-    })->name('clients');
+    Route::prefix('clients')->name('clients.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::put('/update-status/{user}', [UserController::class, 'updateStatus'])->name('update-status');
+    });
 
     Route::get('/chat-nodes', function () {
         return Inertia::render('Admin/ChatNodes');

@@ -37,7 +37,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Clients",
-        route: route("admin.clients"),
+        route: route("admin.clients.index"),
         icon: "fa-solid fa-users",
     },
     {
