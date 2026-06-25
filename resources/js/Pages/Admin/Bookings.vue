@@ -11,10 +11,9 @@ import { useModal } from "@/Composables/useModal";
 
 const tableColumns = [
     { key: "id", label: "ID" },
-    { key: "client", label: "Client" },
+    { key: "ref", label: "Booking Ref" },
     { key: "event_details", label: "Event Details", slot: "event_details" },
-    { key: "package", label: "Package" },
-    { key: "package_add_ons", label: "Package Add-Ons", slot: "package_add_ons" },
+    { key: "package", label: "Package", slot: "package" },
     { key: "contact", label: "Contact", slot: "contact" },
     { key: "date", label: "Date", slot: "date" },
     { key: "status", label: "Status", slot: "status" },
@@ -24,6 +23,7 @@ const tableColumns = [
 const tableData = ref([
     {
         id: 1,
+        ref: "BK-0001",
         client: "Alex",
         event_details: [
             {
@@ -33,16 +33,20 @@ const tableData = ref([
                 guests: 30,
             },
         ],
-        package: "Upper Deck Experience 3500",
-        package_add_ons: [
-            { id: 1, title: "Captain's Experience", price: "500" },
-            { id: 2, title: "Catering Package", price: "3500" },
-            { id: 3, title: "Event Decoration", price: "2000" },
-            { id: 4, title: "Photo & Video Coverage", price: "4500" },
-            { id: 5, title: "Sound System", price: "1500" },
-        ],
+        package: {
+            title: "Upper Deck Experience",
+            price: "3500",
+            package_add_ons: [
+                { id: 1, title: "Captain's Experience", price: "500" },
+                { id: 2, title: "Catering Package", price: "3500" },
+                { id: 3, title: "Event Decoration", price: "2000" },
+                { id: 4, title: "Photo & Video Coverage", price: "4500" },
+                { id: 5, title: "Sound System", price: "1500" },
+            ],
+        },
         contact: [
             {
+                client: "Alex",
                 name: "John Doe",
                 email: "Q8S4F@example.com",
                 phone: "09123456789",
@@ -124,7 +128,6 @@ const submit = () => {
                     :columns="tableColumns"
                     :actions="tableActions"
                 >
-
                     <template #event_details="{ value }">
                         <div v-for="item in value" :key="item.id">
                             <p class="text-sm text-stone-600">
@@ -142,8 +145,15 @@ const submit = () => {
                         </div>
                     </template>
 
-                    <template #package_add_ons="{ value }">
-                        <div v-for="item in value" :key="item.id">
+                    <template #package="{ value }">
+                        <p class="text-sm text-stone-600">
+                            {{ value.title }}
+                        </p>
+                        <p class="text-sm text-stone-600">
+                            {{ formatAmount(value.price) }}
+                        </p>
+                        <hr class="my-1" />
+                        <div v-for="item in value.package_add_ons" :key="item.id">
                             <p class="text-sm text-stone-600">
                                 {{ item.title }}
                             </p>
@@ -156,13 +166,16 @@ const submit = () => {
                     <template #contact="{ value }">
                         <div v-for="item in value" :key="item.id">
                             <p class="text-sm text-stone-600">
-                                {{ item.name }}
+                                Client: {{ item.client }}
                             </p>
                             <p class="text-sm text-stone-600">
-                                {{ item.email }}
+                                Guest: {{ item.name }}
                             </p>
                             <p class="text-sm text-stone-600">
-                                {{ item.phone }}
+                                Email: {{ item.email }}
+                            </p>
+                            <p class="text-sm text-stone-600">
+                                Phone: {{ item.phone }}
                             </p>
                         </div>
                     </template>
@@ -185,7 +198,7 @@ const submit = () => {
                         </span>
                     </template>
                     <template #actions="{ row }">
-                        <div class="flex flex-col  gap-1">
+                        <div class="flex flex-col gap-1">
                             <Link
                                 class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
                                 :href="route('admin.messages')"
@@ -199,9 +212,7 @@ const submit = () => {
                                 class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
                                 @click="editStatusModalOpen(row)"
                             >
-                                <font-awesome-icon
-                                    icon="fa-solid fa-check"
-                                />
+                                <font-awesome-icon icon="fa-solid fa-check" />
                                 Confirm
                             </button>
                             <button
@@ -215,7 +226,9 @@ const submit = () => {
                                 class="bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
                                 @click="editStatusModalOpen(row)"
                             >
-                                <font-awesome-icon icon="fa-solid fa-check-double" />
+                                <font-awesome-icon
+                                    icon="fa-solid fa-check-double"
+                                />
                                 Complete
                             </button>
                         </div>
@@ -237,7 +250,8 @@ const submit = () => {
 
                     <div class="mt-6">
                         <p class="text-gray-600">
-                            Are you sure you want to update the status of this booking?
+                            Are you sure you want to update the status of this
+                            booking?
                         </p>
                     </div>
 
