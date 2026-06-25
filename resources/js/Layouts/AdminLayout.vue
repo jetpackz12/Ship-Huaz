@@ -26,7 +26,7 @@ const sidebarMenus = [
                 menuName: "Package Add Ons",
                 route: route("admin.package-add-ons"),
             },
-            { menuName: "GCash & Maya", route: route("admin.payment-options") },
+            { menuName: "GCash & Maya", route: route("admin.payment-options.index") },
         ],
     },
     {

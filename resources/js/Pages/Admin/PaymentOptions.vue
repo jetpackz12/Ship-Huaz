@@ -10,8 +10,12 @@ import TextInput from "@/Components/TextInput.vue";
 import TextAreaInput from "@/Components/TextAreaInput.vue";
 import SelectInput from "@/Components/SelectInput.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useModal } from "@/Composables/useModal";
+
+const props = defineProps({
+    paymentOptions: Array,
+});
 
 const tableColumns = [
     { key: "id", label: "ID" },
@@ -23,26 +27,32 @@ const tableColumns = [
     { key: "actions", label: "Actions", slot: "actions" },
 ];
 
-const tableData = ref([
-    {
-        id: 1,
-        payment: "GCash",
-        number: "0987654321",
-        account: "Butal Ship Hauz",
-        description:
-            "After sending, fill in your details below so we can verify your payment.",
-        status: "active",
+const tableData = ref(
+    props.paymentOptions.map((paymentOption, index) => ({
+        id: index + 1,
+        payment_option_id: paymentOption.id,
+        payment: paymentOption.payment,
+        number: paymentOption.number,
+        account: paymentOption.account,
+        description: paymentOption.description,
+        status: paymentOption.status,
+    })),
+);
+
+watch(
+    () => props.paymentOptions,
+    (newPaymentOptions) => {
+        tableData.value = newPaymentOptions.map((paymentOption, index) => ({
+            id: index + 1,
+            payment_option_id: paymentOption.id,
+            payment: paymentOption.payment,
+            number: paymentOption.number,
+            account: paymentOption.account,
+            description: paymentOption.description,
+            status: paymentOption.status,
+        }));
     },
-    {
-        id: 2,
-        payment: "Maya",
-        number: "0987654321",
-        account: "Butal Ship Hauz",
-        description:
-            "After sending, fill in your details below so we can verify your payment.",
-        status: "inactive",
-    },
-]);
+);
 
 const tableActions = {
     isDateFilterShow: false,
@@ -63,13 +73,14 @@ const statusConfig = {
 
 const modal = useModal();
 
-const editPaymentOption = (info) => {
-    form.payment = info.payment;
-    form.number = info.number;
-    form.account = info.account;
-    form.description = info.description;
-    form.status = info.status;
-    
+const editPaymentOption = (item) => {
+    form.id = item.payment_option_id;
+    form.payment = item.payment;
+    form.number = item.number;
+    form.account = item.account;
+    form.description = item.description;
+    form.status = item.status;
+
     modal.title.value = "Edit Payment Option";
     modal.type.value = "Edit";
     modal.icon.value = "fa-solid fa-pen-to-square";
@@ -88,6 +99,7 @@ const statusFormat = ref([
 ]);
 
 const form = useForm({
+    id: "",
     payment: "",
     number: "",
     account: "",
@@ -96,7 +108,9 @@ const form = useForm({
 });
 
 const submit = () => {
-    console.log(form);
+    form.put(route("admin.payment-options.update", form.id), {
+        onSuccess: () => closeEditModal(),
+    });
 };
 </script>
 
@@ -150,7 +164,7 @@ const submit = () => {
 
             <Modal
                 :show="modal.open.value"
-                @close="closeEditModal"
+                @close="!form.processing && closeEditModal()"
                 :maxWidth="'lg'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -252,15 +266,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="closeEditModal"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <PrimaryButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Save
                             <font-awesome-icon icon="fa-solid fa-paper-plane" />
                         </PrimaryButton>

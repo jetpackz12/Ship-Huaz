@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PaymentOptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -51,9 +52,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         return Inertia::render('Admin/PackageAddOns');
     })->name('package-add-ons');
 
-    Route::get('/payment-options', function () {
-        return Inertia::render('Admin/PaymentOptions');
-    })->name('payment-options');
+    Route::prefix('payment-options')->name('payment-options.')->group(function () {
+        Route::get('/', [PaymentOptionController::class, 'index'])->name('index');
+        Route::put('/update/{paymentOption}', [PaymentOptionController::class, 'update'])->name('update');
+    });
 
     Route::get('/messages', function () {
         return Inertia::render('Admin/Messages');
