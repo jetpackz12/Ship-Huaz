@@ -11,9 +11,13 @@ import TextInput from "@/Components/TextInput.vue";
 import TextAreaInput from "@/Components/TextAreaInput.vue";
 import SelectInput from "@/Components/SelectInput.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
 import { useModal } from "@/Composables/useModal";
+
+const props = defineProps({
+    packageAddOns: Array,
+});
 
 const tableColumns = [
     { key: "id", label: "ID" },
@@ -24,50 +28,30 @@ const tableColumns = [
     { key: "actions", label: "Actions", slot: "actions" },
 ];
 
-const tableData = ref([
-    {
-        id: 1,
-        title: "Captain's Experience",
-        description: "Uniforms + immersive ship photo ops for all guests",
-        price: "500",
-        status: "active",
+const tableData = ref(
+    props.packageAddOns.map((item, index) => ({
+        id: index + 1,
+        package_add_on_id: item.id,
+        title: item.title,
+        description: item.description,
+        price: item.price,
+        status: item.status,
+    })),
+);
+
+watch(
+    () => props.packageAddOns,
+    (newPackageAddOns) => {
+        tableData.value = newPackageAddOns.map((item, index) => ({
+            id: index + 1,
+            package_add_on_id: item.id,
+            title: item.title,
+            description: item.description,
+            price: item.price,
+            status: item.status,
+        }));
     },
-    {
-        id: 2,
-        title: "Catering Package",
-        description: "Filipino-style buffet with drinks for your group",
-        price: "3500",
-        status: "inactive",
-    },
-    {
-        id: 3,
-        title: "Event Decoration",
-        description: "Themed ship décor, balloons, and table setup",
-        price: "2000",
-        status: "active",
-    },
-    {
-        id: 4,
-        title: "Photo & Video Coverage",
-        description: "Professional photographer for the duration of event",
-        price: "4500",
-        status: "active",
-    },
-    {
-        id: 5,
-        title: "Sound System",
-        description: "PA system with wireless microphone and playlist setup",
-        price: "1500",
-        status: "inactive",
-    },
-    {
-        id: 6,
-        title: "Guest Entry Passes",
-        description: "Guest entry passes for all guests",
-        price: "500",
-        status: "active",
-    },
-]);
+);
 
 const tableActions = {
     isDateFilterShow: false,
@@ -98,7 +82,7 @@ const addModalOpen = () => {
 };
 
 const editModalOpen = (item) => {
-    form.id = item.id;
+    form.id = item.package_add_on_id;
     form.title = item.title;
     form.description = item.description;
     form.price = item.price;
@@ -111,8 +95,8 @@ const editModalOpen = (item) => {
 };
 
 const deleteModalOpen = (item) => {
-    form.id = item.id;
-    
+    form.id = item.package_add_on_id;
+
     modal.title.value = "Delete Package Add-On";
     modal.type.value = "Delete";
     modal.icon.value = "fa-solid fa-trash";
@@ -139,7 +123,19 @@ const form = useForm({
 });
 
 const submit = () => {
-    console.log(form);
+    if (modal.type.value === "Add") {
+        form.post(route("admin.package-add-ons.store"), {
+            onSuccess: () => modalClose(),
+        });
+    } else if (modal.type.value === "Edit") {
+        form.put(route("admin.package-add-ons.update", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    } else if (modal.type.value === "Delete") {
+        form.delete(route("admin.package-add-ons.destroy", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    }
 };
 </script>
 
@@ -211,8 +207,10 @@ const submit = () => {
 
             <!-- Add & Edit Modal -->
             <Modal
-                :show="modal.type.value === 'Add' || modal.type.value === 'Edit'"
-                @close="modalClose"
+                :show="
+                    modal.type.value === 'Add' || modal.type.value === 'Edit'
+                "
+                @close="!form.processing && modalClose()"
                 :maxWidth="'lg'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -231,6 +229,7 @@ const submit = () => {
                             v-model="form.title"
                             required
                             placeholder="e.g. Captain's Experience"
+                            @keypress.enter="submit"
                         />
 
                         <InputError :message="form.errors.title" class="mt-2" />
@@ -247,6 +246,7 @@ const submit = () => {
                             rows="4"
                             required
                             placeholder="e.g. Lorem ipsum dolor sit amet"
+                            @keypress.enter="submit"
                         />
 
                         <InputError
@@ -265,6 +265,7 @@ const submit = () => {
                             v-model="form.price"
                             required
                             placeholder="e.g. 1000"
+                            @keypress.enter="submit"
                         />
 
                         <InputError :message="form.errors.price" class="mt-2" />
@@ -290,15 +291,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <PrimaryButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Save
                             <font-awesome-icon icon="fa-solid fa-paper-plane" />
                         </PrimaryButton>
@@ -309,7 +320,7 @@ const submit = () => {
             <!-- Delete Modal -->
             <Modal
                 :show="modal.type.value === 'Delete'"
-                @close="modalClose"
+                @close="!form.processing && modalClose()"
                 :maxWidth="'sm'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -327,15 +338,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <DangerButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Confirm
                             <font-awesome-icon icon="fa-solid fa-thumbs-up" />
                         </DangerButton>

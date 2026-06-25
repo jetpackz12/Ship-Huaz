@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PackageAddOnController;
 use App\Http\Controllers\PaymentOptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
@@ -48,9 +49,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         return Inertia::render('Admin/VenuePackages');
     })->name('venue-packages');
 
-    Route::get('/package-add-ons', function () {
-        return Inertia::render('Admin/PackageAddOns');
-    })->name('package-add-ons');
+    Route::prefix('package-add-ons')->name('package-add-ons.')->group(function () {
+        Route::get('/', [PackageAddOnController::class, 'index'])->name('index');
+        Route::post('/store', [PackageAddOnController::class, 'store'])->name('store');
+        Route::put('/update/{packageAddOn}', [PackageAddOnController::class, 'update'])->name('update');
+        Route::delete('/destroy/{packageAddOn}', [PackageAddOnController::class, 'destroy'])->name('destroy');
+    });
 
     Route::prefix('payment-options')->name('payment-options.')->group(function () {
         Route::get('/', [PaymentOptionController::class, 'index'])->name('index');
