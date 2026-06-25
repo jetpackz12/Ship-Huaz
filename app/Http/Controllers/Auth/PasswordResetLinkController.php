@@ -34,7 +34,11 @@ class PasswordResetLinkController extends Controller
             'email' => 'required|email',
         ]);
 
-        $user = User ::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
+
+        if ($user && $user->status === 'inactive') {
+            return back()->with('status', __('passwords.sent'));
+        }
 
         if ($user && $user->role === 'admin') {
             return back()->with('status', __('passwords.sent'));
