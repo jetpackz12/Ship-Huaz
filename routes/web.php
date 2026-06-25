@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PackageAddOnController;
@@ -38,14 +39,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         return Inertia::render('Admin/Bookings');
     })->name('bookings');
 
-    Route::get('/time-slots', function () {
-        return Inertia::render('Admin/TimeSlots');
-    })->name('time-slots');
+    // Route::get('/time-slots', function () {
+    //     return Inertia::render('Admin/TimeSlots');
+    // })->name('time-slots');
 
-    Route::get('/event-types', function () {
-        return Inertia::render('Admin/EventTypes');
-    })->name('event-types');
-    
+    Route::prefix('event-types')->name('event-types.')->group(function () {
+        Route::get('/', [EventTypeController::class, 'index'])->name('index');
+        Route::post('/store', [EventTypeController::class, 'store'])->name('store');
+        Route::put('/update/{id}', [EventTypeController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [EventTypeController::class, 'destroy'])->name('destroy');
+    });
+
     Route::prefix('venue-packages')->name('venue-packages.')->group(function () {
         Route::get('/', [VenuePackageController::class, 'index'])->name('index');
         Route::post('/store', [VenuePackageController::class, 'store'])->name('store');

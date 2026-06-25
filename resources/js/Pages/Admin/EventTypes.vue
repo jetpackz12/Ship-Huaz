@@ -8,12 +8,15 @@ import InputLabel from "@/Components/InputLabel.vue";
 import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
-import TextAreaInput from "@/Components/TextAreaInput.vue";
 import SelectInput from "@/Components/SelectInput.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
 import { useModal } from "@/Composables/useModal";
+
+const props = defineProps({
+    eventTypes: Array,
+});
 
 const tableColumns = [
     { key: "id", label: "ID" },
@@ -22,48 +25,26 @@ const tableColumns = [
     { key: "actions", label: "Actions", slot: "actions" },
 ];
 
-const tableData = ref([
-    {
-        id: 1,
-        type: "Birthday Party",
-        status: "active",
+const tableData = ref(
+    props.eventTypes.map((item, index) => ({
+        id: index + 1,
+        event_type_id: item.id,
+        type: item.type,
+        status: item.status,
+    })),
+);
+
+watch(
+    () => props.eventTypes,
+    (newEventTypes) => {
+        tableData.value = newEventTypes.map((item, index) => ({
+            id: index + 1,
+            event_type_id: item.id,
+            type: item.type,
+            status: item.status,
+        }));
     },
-    {
-        id: 2,
-        type: "Wedding Reception",
-        status: "inactive",
-    },
-    {
-        id: 3,
-        type: "Debut / 18th Birthday",
-        status: "active",
-    },
-    {
-        id: 4,
-        type: "Corporate Event",
-        status: "inactive",
-    },
-    {
-        id: 5,
-        type: "Team Building",
-        status: "active",
-    },
-    {
-        id: 6,
-        type: "Photo / Video Shoot",
-        status: "active",
-    },
-    {
-        id: 7,
-        type: "Anniversary Celebration",
-        status: "inactive",
-    },
-    {
-        id: 8,
-        type: "Other",
-        status: "active",
-    },
-]);
+);
 
 const tableActions = {
     isDateFilterShow: false,
@@ -94,7 +75,7 @@ const addModalOpen = () => {
 };
 
 const editModalOpen = (item) => {
-    form.id = item.id;
+    form.id = item.event_type_id;
     form.type = item.type;
     form.status = item.status;
 
@@ -105,8 +86,8 @@ const editModalOpen = (item) => {
 };
 
 const deleteModalOpen = (item) => {
-    form.id = item.id;
-    
+    form.id = item.event_type_id;
+
     modal.title.value = "Delete Event Type";
     modal.type.value = "Delete";
     modal.icon.value = "fa-solid fa-trash";
@@ -131,7 +112,19 @@ const form = useForm({
 });
 
 const submit = () => {
-    console.log(form);
+    if (modal.type.value === "Add") {
+        form.post(route("admin.event-types.store"), {
+            onSuccess: () => modalClose(),
+        });
+    } else if (modal.type.value === "Edit") {
+        form.put(route("admin.event-types.update", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    } else if (modal.type.value === "Delete") {
+        form.delete(route("admin.event-types.destroy", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    }
 };
 </script>
 
@@ -203,8 +196,10 @@ const submit = () => {
 
             <!-- Add & Edit Modal -->
             <Modal
-                :show="modal.type.value === 'Add' || modal.type.value === 'Edit'"
-                @close="modalClose"
+                :show="
+                    modal.type.value === 'Add' || modal.type.value === 'Edit'
+                "
+                @close="!form.processing && modalClose()"
                 :maxWidth="'lg'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -223,6 +218,7 @@ const submit = () => {
                             v-model="form.type"
                             required
                             placeholder="e.g. Birthday Party"
+                            @keypress.enter="submit"
                         />
 
                         <InputError :message="form.errors.type" class="mt-2" />
@@ -248,15 +244,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <PrimaryButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Save
                             <font-awesome-icon icon="fa-solid fa-paper-plane" />
                         </PrimaryButton>
@@ -267,7 +273,7 @@ const submit = () => {
             <!-- Delete Modal -->
             <Modal
                 :show="modal.type.value === 'Delete'"
-                @close="modalClose"
+                @close="!form.processing && modalClose()"
                 :maxWidth="'sm'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -285,15 +291,25 @@ const submit = () => {
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <DangerButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Confirm
                             <font-awesome-icon icon="fa-solid fa-thumbs-up" />
                         </DangerButton>
