@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ChatBotController;
 use App\Http\Controllers\ChatBotNodeController;
+use App\Http\Controllers\ChatBotNodeOptionController;
 use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
@@ -86,9 +88,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/destroy/{chatBotNode}', [ChatBotNodeController::class, 'destroy'])->name('destroy');
     });
 
-    Route::get('/chat-node-options', function () {
-        return Inertia::render('Admin/ChatNodeOptions');
-    })->name('chat-node-options');
+    Route::prefix('chat-node-options')->name('chat-node-options.')->group(function () {
+        Route::get('/', [ChatBotNodeOptionController::class, 'index'])->name('index');
+        Route::post('/store', [ChatBotNodeOptionController::class, 'store'])->name('store');
+        Route::put('/update/{nodeId}', [ChatBotNodeOptionController::class, 'update'])->name('update');
+        Route::delete('/destroy/{nodeId}', [ChatBotNodeOptionController::class, 'destroy'])->name('destroy');
+    });
 
     Route::get('/profile', function () {
         return Inertia::render('Admin/Profile');
@@ -103,5 +108,9 @@ Route::middleware('auth')->group(function () {
     // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+
+Route::get('/api/chatbot', [ChatBotController::class, 'index'])->name('chatbot.index');
+Route::get('/api/chatbot/nodes', [ChatBotController::class, 'nodes'])->name('chatbot.nodes');
 
 require __DIR__ . '/auth.php';

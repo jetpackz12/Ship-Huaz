@@ -47,7 +47,7 @@ const sidebarMenus = [
             { menuName: "Nodes", route: route("admin.chat-nodes.index") },
             {
                 menuName: "Node Options",
-                route: route("admin.chat-node-options"),
+                route: route("admin.chat-node-options.index"),
             },
         ],
     },

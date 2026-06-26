@@ -8,240 +8,45 @@ import InputLabel from "@/Components/InputLabel.vue";
 import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import SelectInput from "@/Components/SelectInput.vue";
-import SelectCustomInput from "@/Components/SelectCustomInput.vue";
 import { Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useModal } from "@/Composables/useModal";
 
-const nodeData = ref([
-    {
-        value: "0",
-        label: "Back to menu",
-    },
-    {
-        value: "1",
-        label: "Venue Booking",
-    },
-    {
-        value: "2",
-        label: "Accommodations",
-    },
-    {
-        value: "3",
-        label: "Island Tours",
-    },
-    {
-        value: "4",
-        label: "Tour Routes",
-    },
-    {
-        value: "5",
-        label: "Event Planning",
-    },
-    {
-        value: "6",
-        label: "Weddings at Ship Hauz",
-    },
-    {
-        value: "7",
-        label: "Dining & Catering",
-    },
-    {
-        value: "8",
-        label: "Photography Venue",
-    },
-    {
-        value: "9",
-        label: "Location & Hours",
-    },
-    {
-        value: "10",
-        label: "Directions",
-    },
-    {
-        value: "11",
-        label: "Contact Us",
-    },
-    {
-        value: "12",
-        label: "Our Packages",
-    },
-    {
-        value: "13",
-        label: "How to Book",
-    },
+const props = defineProps({
+    tableData: Array,
+});
+
+const allNodes = ref([]);
+const loadingNodes = ref(true);
+
+onMounted(async () => {
+    try {
+        const res = await fetch(`${import.meta.env.VITE_APP_URL}/api/chatbot/nodes`);
+        const data = await res.json();
+        allNodes.value = data.map((n) => ({
+            value: String(n.id),
+            label: n.node_key,
+        }));
+    } catch (e) {
+        console.error("Failed to load nodes", e);
+    } finally {
+        loadingNodes.value = false;
+    }
+});
+
+const parentNodeOptions = computed(() => [
+    { value: "", label: "-- Select a node --", disabled: true },
+    ...allNodes.value,
 ]);
 
 const tableColumns = [
-    { key: "id", label: "ID" },
-    { key: "node_key", label: "Node Key" },
-    { key: "message", label: "Message", slot: "message" },
-    { key: "options", label: "Options", slot: "options" },
-    { key: "status", label: "Status", slot: "status" },
-    { key: "actions", label: "Actions", slot: "actions" },
+    { key: "id",       label: "ID" },
+    { key: "node_key", label: "Node" },
+    { key: "message",  label: "Message", slot: "message" },
+    { key: "options",  label: "Options", slot: "options" },
+    { key: "status",   label: "Status",  slot: "status" },
+    { key: "actions",  label: "Actions", slot: "actions" },
 ];
-
-const tableData = ref([
-    {
-        id: "1",
-        node_id: "1",
-        node_key: "Venue Booking",
-        message:
-            "Our iconic ship-shaped venue spaces start at ₱5,000 per event. We have 8 different event spaces for intimate dinners to grand receptions. Would you like to know more?",
-        options: [
-            { id: "12", label: "Our packages" },
-            { id: "13", label: "How to book" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "2",
-        node_id: "2",
-        node_key: "Accommodations",
-        message:
-            "Spend the night aboard the Ship Hauz! Our nautical-themed rooms start at ₱1,200/night. Enjoy stunning views of the Bohol landscape right from your room.",
-        options: [
-            { id: "12", label: "Our packages" },
-            { id: "13", label: "How to book" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "3",
-        node_id: "3",
-        node_key: "Island Tours",
-        message:
-            "Explore Northern Bohol's natural wonders! We offer 12 island tour routes starting at ₱800/person. Hidden waterfalls, pristine beaches, and more await you.",
-        options: [
-            { id: "4",  label: "Tour routes" },
-            { id: "12", label: "Our packages" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "4",
-        node_id: "4",
-        node_key: "Tour Routes",
-        message:
-            "We have 12 curated routes including island-hopping tours, waterfall treks, heritage site visits, and snorkeling adventures around Northern Bohol. All tours are guided and depart from Butal Ship Hauz.",
-        options: [
-            { id: "13", label: "How to book" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "5",
-        node_id: "5",
-        node_key: "Event Planning",
-        message:
-            "Let our crew handle everything! Event planning packages start at ₱15,000 and cover weddings, debuts, corporate events, and reunions — coordination, catering, and venue all included.",
-        options: [
-            { id: "6",  label: "Weddings at Ship Hauz" },
-            { id: "12", label: "Our packages" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "6",
-        node_id: "6",
-        node_key: "Weddings at Ship Hauz",
-        message:
-            "Say 'I do' at Bohol's most iconic venue! Our wedding packages include full catering, coordination, venue styling, and accommodation for the couple. Contact us for a custom quote tailored to your dream day.",
-        options: [
-            { id: "11", label: "Contact us" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "7",
-        node_id: "7",
-        node_key: "Dining & Catering",
-        message:
-            "Savor fresh Bohol flavors at our on-site restaurant! Dining starts at ₱350/person. We also offer custom catering services for groups of all sizes — barkada, family reunions, corporate events.",
-        options: [
-            { id: "6",  label: "Weddings at Ship Hauz" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "8",
-        node_id: "8",
-        node_key: "Photography Venue",
-        message:
-            "The Ship Hauz is Bohol's most photographed landmark! Photography sessions start at ₱2,500. Perfect for prenuptial shoots, fashion photography, debut pictorials, and commercial production.",
-        options: [
-            { id: "13", label: "How to book" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "9",
-        node_id: "9",
-        node_key: "Location & Hours",
-        message:
-            "Butal Ship Hauz, Talibon, Bohol, Philippines Open daily: 7:00 AM – 9:00 PM Reservations: 8:00 AM – 6:00 PM +63 (0) 912 345 6789",
-        options: [
-            { id: "10", label: "Directions" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "10",
-        node_id: "10",
-        node_key: "Directions",
-        message:
-            "We're located in Talibon, the gateway to Northern Bohol's hidden gems. From Tagbilaran City, take a bus or van to Talibon (approx. 2–3 hours). Ask locals for 'Butal Ship Hauz' — everyone knows it!",
-        options: [
-            { id: "11", label: "Call for pickup info" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "11",
-        node_id: "11",
-        node_key: "Contact Us",
-        message:
-            "Our crew is ready to help! +63 (0) 912 345 6789 reservations@butalshiphauz.com.ph For reservations and inquiries, we respond within 24 hours.",
-        options: [
-            { id: "0", label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "12",
-        node_id: "12",
-        node_key: "Our Packages",
-        message:
-            "Day Tour – ₱999 (venue access, 1 meal, guided tour) Overnight – ₱2,499 (room, 3 meals, island tour, venue access) Weekend – ₱4,299 (2 nights, all meals, 2 tours, event hall) Custom packages also available — contact us!",
-        options: [
-            { id: "11", label: "Contact Us" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-    {
-        id: "13",
-        node_id: "13",
-        node_key: "How to Book",
-        message:
-            "Booking is easy! 3 ways to reserve: 1️ Call us at +63 (0) 912 345 6789 2️ Email reservations@butalshiphauz.com.ph 3️ Use the 'Book a Reservation' button on this page A 50% down payment is required to confirm bookings.",
-        options: [
-            { id: "11", label: "Contact Us" },
-            { id: "0",  label: "Back to menu" },
-        ],
-        status: "active",
-    },
-]);
 
 const tableActions = {
     isDateFilterShow: false,
@@ -262,31 +67,24 @@ const statusConfig = {
 
 const modal = useModal();
 
-const addModalOpen = () => {
-    modal.title.value = "Add Chat Node";
-    modal.type.value = "Add";
-    modal.icon.value = "fa-solid fa-plus-circle";
-    modal.openModal();
-};
-
 const editModalOpen = (item) => {
-    form.id = item.id;
-    form.node_id = item.node_id;
-    form.options = item.options.map((option) => option.id);
-    form.status = item.status;
+    form.id              = item.id;
+    form.node_id         = String(item.id);
+    form.option_node_ids = item.options.map((o) => String(o.next_node_id));
+    form.status          = item.status;
 
-    modal.title.value = "Edit Chat Node";
-    modal.type.value = "Edit";
-    modal.icon.value = "fa-solid fa-pen-to-square";
+    modal.title.value = "Edit Chat Node Options";
+    modal.type.value  = "Edit";
+    modal.icon.value  = "fa-solid fa-pen-to-square";
     modal.openModal();
 };
 
 const deleteModalOpen = (item) => {
     form.id = item.id;
 
-    modal.title.value = "Delete Chat Node";
-    modal.type.value = "Delete";
-    modal.icon.value = "fa-solid fa-trash";
+    modal.title.value = "Delete Chat Node Options";
+    modal.type.value  = "Delete";
+    modal.icon.value  = "fa-solid fa-trash";
     modal.openModal();
 };
 
@@ -295,21 +93,42 @@ const modalClose = () => {
     modal.closeModal();
 };
 
+const form = useForm({
+    id:              "",
+    node_id:         "",
+    option_node_ids: [],
+    status:          "",
+});
+
 const statusFormat = ref([
-    { value: "", label: "-- Select status --", disabled: true },
-    { value: "active", label: "Active" },
+    { value: "",         label: "-- Select status --", disabled: true },
+    { value: "active",   label: "Active" },
     { value: "inactive", label: "Inactive" },
 ]);
 
-const form = useForm({
-    id: "",
-    node_id: "",
-    options: [],
-    status: "",
-});
+function toggleOption(nodeId) {
+    const idx = form.option_node_ids.indexOf(nodeId);
+    if (idx === -1) {
+        form.option_node_ids.push(nodeId);
+    } else {
+        form.option_node_ids.splice(idx, 1);
+    }
+}
+
+function isSelected(nodeId) {
+    return form.option_node_ids.includes(nodeId);
+}
 
 const submit = () => {
-    console.log(form);
+     if (modal.type.value === "Edit") {
+        form.put(route("admin.chat-node-options.update", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    } else if (modal.type.value === "Delete") {
+        form.delete(route("admin.chat-node-options.destroy", form.id), {
+            onSuccess: () => modalClose(),
+        });
+    }
 };
 </script>
 
@@ -318,69 +137,50 @@ const submit = () => {
 
     <AdminLayout>
         <div>
-            <div
-                class="bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden px-4 py-4"
-            >
-                <div
-                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2"
-                >
-                    <h1 class="text-xl font-bold text-stone-800">
-                        Chat Node Options
-                    </h1>
-                    <PrimaryButton
-                        class="flex items-center gap-1"
-                        @click="addModalOpen"
-                    >
-                        <font-awesome-icon icon="fa-solid fa-plus-circle" />
-                        Add Chat Node Option
-                    </PrimaryButton>
+            <div class="bg-white rounded-xl shadow-sm border border-stone-100 overflow-hidden px-4 py-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                    <h1 class="text-xl font-bold text-stone-800">Chat Node Options</h1>
                 </div>
 
-                <Table
-                    :data="tableData"
-                    :columns="tableColumns"
-                    :actions="tableActions"
-                >
+                <Table :data="tableData" :columns="tableColumns" :actions="tableActions">
                     <template #message="{ value }">
-                        <span
-                            class="text-sm text-gray-600 text-wrap"
-                            v-html="value"
-                        ></span>
+                        <span class="text-sm text-gray-600 line-clamp-2 text-wrap">{{ value }}</span>
                     </template>
 
                     <template #options="{ value }">
-                        <div
-                            class="flex flex-col"
-                            v-for="(item, index) in value"
-                            :key="index"
-                        >
+                        <div class="flex flex-wrap gap-1">
                             <span
-                                class="text-sm text-gray-900 bg-gray-200 px-2 py-1 rounded-full mt-1"
-                                >{{ item.label }}</span
+                                v-for="(opt, i) in value"
+                                :key="i"
+                                class="inline-flex items-center text-xs bg-gray-100 text-gray-700 border border-gray-200 px-2 py-0.5 rounded-full"
                             >
+                                {{ opt.label }}
+                            </span>
+                            <span
+                                v-if="!value || value.length === 0"
+                                class="text-xs text-gray-400 italic"
+                            >
+                                No options
+                            </span>
                         </div>
                     </template>
 
                     <template #status="{ value }">
                         <span
                             class="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize"
-                            :class="
-                                statusConfig[value]?.classes ??
-                                'bg-gray-100 text-gray-600'
-                            "
+                            :class="statusConfig[value]?.classes ?? 'bg-gray-100 text-gray-600'"
                         >
                             {{ statusConfig[value]?.label ?? value }}
                         </span>
                     </template>
+
                     <template #actions="{ row }">
                         <div class="flex items-center justify-center gap-1">
                             <button
                                 class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
                                 @click="editModalOpen(row)"
                             >
-                                <font-awesome-icon
-                                    icon="fa-solid fa-pen-to-square"
-                                />
+                                <font-awesome-icon icon="fa-solid fa-pen-to-square" />
                                 Edit
                             </button>
                             <button
@@ -395,59 +195,120 @@ const submit = () => {
                 </Table>
             </div>
 
-            <!-- Add & Edit Modal -->
+            <!-- Edit Modal -->
             <Modal
-                :show="
-                    modal.type.value === 'Add' || modal.type.value === 'Edit'
-                "
-                @close="modalClose"
+                :show="modal.type.value === 'Edit'"
+                @close="!form.processing && modalClose()"
                 :maxWidth="'lg'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h2 class="text-lg font-medium text-gray-900">
+                    <h2 class="text-lg font-medium text-gray-900 mb-6">
                         <font-awesome-icon :icon="modal.icon.value" />
                         {{ modal.title.value }}
                     </h2>
 
-                    <div class="mt-6">
-                        <InputLabel for="node_id" value="Node ID" />
-
+                    <!-- Parent node picker -->
+                    <div>
+                        <InputLabel for="node_id" value="Parent Node" />
+                        <p class="text-xs text-gray-400 mt-0.5 mb-1">
+                            Which node are you configuring options for?
+                        </p>
                         <SelectInput
                             id="node_id"
-                            :options="nodeData"
+                            :options="parentNodeOptions"
                             class="mt-1 block w-full"
                             v-model="form.node_id"
+                            :disabled="loadingNodes || modal.type.value === 'Edit'"
                             required
                         />
-
-                        <InputError
-                            :message="form.errors.node_id"
-                            class="mt-2"
-                        />
+                        <InputError :message="form.errors.node_id" class="mt-2" />
                     </div>
 
-                    <div class="mt-2">
-                        <InputLabel for="options" value="Options" />
+                    <!-- Option nodes — checkbox list -->
+                    <div class="mt-5">
+                        <InputLabel value="Linked Option Nodes" />
+                        <p class="text-xs text-gray-400 mt-0.5 mb-2">
+                            Select which nodes will appear as buttons under this node.
+                            The <strong>node_key</strong> will be used as the button label.
+                        </p>
 
-                        <SelectCustomInput
-                            id="options"
-                            :options="nodeData"
-                            class="mt-1 block w-full"
-                            v-model="form.options"
-                            required
-                            multiple
-                            placeholder="Select options..."
-                        />
+                        <!-- Loading state -->
+                        <div
+                            v-if="loadingNodes"
+                            class="text-sm text-gray-400 py-6 text-center border border-gray-200 rounded-lg"
+                        >
+                            <font-awesome-icon icon="fa-solid fa-spinner" spin class="mr-1" />
+                            Loading nodes…
+                        </div>
 
-                        <InputError
-                            :message="form.errors.options"
-                            class="mt-2"
-                        />
+                        <!-- Checkbox list -->
+                        <div
+                            v-else
+                            class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-56 overflow-y-auto"
+                        >
+                            <label
+                                v-for="node in allNodes"
+                                :key="node.value"
+                                class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors select-none"
+                                :class="{ 'bg-blue-50 hover:bg-blue-50': isSelected(node.value) }"
+                            >
+                                <input
+                                    type="checkbox"
+                                    :checked="isSelected(node.value)"
+                                    @change="toggleOption(node.value)"
+                                    class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                                />
+                                <span
+                                    class="text-sm"
+                                    :class="isSelected(node.value) ? 'text-blue-700 font-medium' : 'text-gray-700'"
+                                >
+                                    {{ node.label }}
+                                </span>
+                                <span
+                                    v-if="isSelected(node.value)"
+                                    class="ml-auto text-xs text-blue-500"
+                                >
+                                    ✓
+                                </span>
+                            </label>
+
+                            <div
+                                v-if="allNodes.length === 0"
+                                class="px-4 py-4 text-sm text-gray-400 text-center"
+                            >
+                                No nodes available.
+                            </div>
+                        </div>
+
+                        <!-- Selected badges summary -->
+                        <div class="mt-2 min-h-[24px]">
+                            <div class="flex flex-wrap gap-1" v-if="form.option_node_ids.length > 0">
+                                <span
+                                    v-for="nodeId in form.option_node_ids"
+                                    :key="nodeId"
+                                    class="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full"
+                                >
+                                    {{ allNodes.find((n) => n.value === nodeId)?.label ?? nodeId }}
+                                    <button
+                                        type="button"
+                                        @click="toggleOption(nodeId)"
+                                        class="hover:text-blue-900 leading-none font-bold"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            </div>
+                            <p v-else class="text-xs text-gray-400 italic">
+                                No options selected yet.
+                            </p>
+                        </div>
+
+                        <InputError :message="form.errors.option_node_ids" class="mt-2" />
                     </div>
 
-                    <div class="mt-2" v-if="modal.type.value === 'Edit'">
+                    <!-- Status (edit only) -->
+                    <div class="mt-4" v-if="modal.type.value === 'Edit'">
                         <InputLabel for="status" value="Status" />
-
                         <SelectInput
                             id="status"
                             :options="statusFormat"
@@ -455,25 +316,31 @@ const submit = () => {
                             v-model="form.status"
                             required
                         />
-
-                        <InputError
-                            :message="form.errors.status"
-                            class="mt-2"
-                        />
+                        <InputError :message="form.errors.status" class="mt-2" />
                     </div>
 
+                    <!-- Buttons -->
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
                             class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
-
                         <PrimaryButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <font-awesome-icon
+                                v-if="form.processing"
+                                icon="fa-solid fa-spinner"
+                                spin
+                                class="text-sm"
+                            />
                             Save
                             <font-awesome-icon icon="fa-solid fa-paper-plane" />
                         </PrimaryButton>
@@ -484,7 +351,7 @@ const submit = () => {
             <!-- Delete Modal -->
             <Modal
                 :show="modal.type.value === 'Delete'"
-                @close="modalClose"
+                @close="!form.processing && modalClose()"
                 :maxWidth="'sm'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -495,24 +362,33 @@ const submit = () => {
 
                     <div class="mt-6">
                         <p class="text-gray-600">
-                            Are you sure you want to delete this chat node option?
+                            Are you sure you want to delete all options for this node?
+                            This action cannot be undone.
                         </p>
                     </div>
 
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
-                            class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
-
                         <DangerButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
-                            Confirm
-                            <font-awesome-icon icon="fa-solid fa-thumbs-up" />
+                            <font-awesome-icon
+                                v-if="form.processing"
+                                icon="fa-solid fa-spinner"
+                                spin
+                                class="text-sm"
+                            />
+                            Confirm Delete
+                            <font-awesome-icon icon="fa-solid fa-trash" />
                         </DangerButton>
                     </div>
                 </div>
