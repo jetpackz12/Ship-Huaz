@@ -13,6 +13,16 @@ class ChatBotNodeSeeder extends Seeder
     public function run(): void
     {
         ChatBotNode::create([
+            'node_key' => 'Main',
+            'message' => 'Ahoy! Welcome to Butal Ship Hauz. How can I help you today?',
+        ]);
+
+        ChatBotNode::create([
+            'node_key' => 'Back to menu',
+            'message' => 'What can I help you with?',
+        ]);
+
+        ChatBotNode::create([
             'node_key' => 'Venue Booking',
             'message' => 'Our iconic ship-shaped venue spaces start at ₱5,000 per event. We have 8 different event spaces for intimate dinners to grand receptions. Would you like to know more?',
         ]);

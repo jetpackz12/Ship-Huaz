@@ -14,7 +14,7 @@ class ChatBotNodeController extends Controller
     public function index()
     {
         $data = [
-            'chatBotNodes' => ChatBotNode::all(),
+            'chatBotNodes' => ChatBotNode::latest()->get(),
         ];
 
         return Inertia::render('Admin/ChatNodes', $data);
@@ -56,6 +56,7 @@ class ChatBotNodeController extends Controller
      */
     public function destroy(ChatBotNode $chatBotNode)
     {
+        $chatBotNode->allOptions()->delete();
         $chatBotNode->delete();
 
         return redirect()->route('admin.chat-nodes.index')->with('success', 'Chat Node deleted successfully.');
