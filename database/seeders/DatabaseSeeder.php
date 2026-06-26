@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             PackageAddOnSeeder::class,
             VenuePackageSeeder::class,
             EventTypeSeeder::class,
+            ChatBotNodeSeeder::class
         ]);
     }
 }
