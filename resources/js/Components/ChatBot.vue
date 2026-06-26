@@ -1,166 +1,72 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+
 const chatOpen = ref(false);
 
-const props = defineProps({
-    open: {
-        type: Boolean,
-        default: false,
-    },
+const chatMessages = ref([]);
+const chatCurrentNodeId = ref(null);
+const chatTyping = ref(false);
+const nodes = ref({});       // keyed by node id
+const mainNodeId = ref(null);
+const loading = ref(true);
+const error = ref(false);
+
+// ── Fetch all nodes from the backend on mount ──
+onMounted(async () => {
+    try {
+        const res = await fetch(`${import.meta.env.VITE_APP_URL}/api/chatbot`);
+        if (!res.ok) throw new Error("Failed to fetch chatbot data");
+        const data = await res.json();
+        nodes.value = data.nodes;
+        mainNodeId.value = data.main_node_id;
+        loading.value = false;
+
+        console.log(data);
+
+        // Seed the welcome message from the main node
+        const main = nodes.value[mainNodeId.value];
+        if (main) {
+            chatMessages.value.push({ from: "bot", text: main.message });
+        }
+    } catch (e) {
+        loading.value = false;
+        error.value = true;
+        chatMessages.value.push({
+            from: "bot",
+            text: "Sorry, I'm having trouble connecting. Please try again later.",
+        });
+    }
 });
 
-const chatMessages = ref([
-    {
-        from: "bot",
-        text: "⚓ Ahoy! Welcome to Butal Ship Hauz. How can I help you today?",
-    },
-]);
-
-const chatStep = ref("main");
-const chatTyping = ref(false);
-
-const chatMenus = {
-    main: {
-        label: "What can I help you with?",
-        options: [
-            { label: "🏛️ Venue Booking", next: "venue" },
-            { label: "🛏️ Accommodations", next: "accommodations" },
-            { label: "🌊 Island Tours", next: "tours" },
-            { label: "🎉 Event Planning", next: "events" },
-            { label: "🍽️ Dining & Catering", next: "dining" },
-            { label: "📸 Photography Venue", next: "photo" },
-            { label: "📍 Location & Hours", next: "location" },
-            { label: "💬 Contact Us", next: "contact" },
-        ],
-    },
-    venue: {
-        label: "Venue Booking",
-        reply: "Our iconic ship-shaped venue spaces start at ₱5,000 per event. We have 8 different event spaces for intimate dinners to grand receptions. Would you like to know more?",
-        options: [
-            { label: "💰 See pricing packages", next: "packages" },
-            { label: "📅 How to book", next: "howtobook" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    accommodations: {
-        label: "Accommodations",
-        reply: "Spend the night aboard the Ship Hauz! Our nautical-themed rooms start at ₱1,200/night. Enjoy stunning views of the Bohol landscape right from your room.",
-        options: [
-            { label: "💰 See packages", next: "packages" },
-            { label: "📅 How to book", next: "howtobook" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    tours: {
-        label: "Island Tours",
-        reply: "Explore Northern Bohol's natural wonders! We offer 12 island tour routes starting at ₱800/person. Hidden waterfalls, pristine beaches, and more await you.",
-        options: [
-            { label: "🗺️ See tour routes", next: "tourroutes" },
-            { label: "💰 See packages", next: "packages" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    tourroutes: {
-        label: "Tour Routes",
-        reply: "We have 12 curated routes including island-hopping tours, waterfall treks, heritage site visits, and snorkeling adventures around Northern Bohol. All tours are guided and depart from Butal Ship Hauz.",
-        options: [
-            { label: "📅 How to book", next: "howtobook" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    events: {
-        label: "Event Planning",
-        reply: "Let our crew handle everything! Event planning packages start at ₱15,000 and cover weddings, debuts, corporate events, and reunions — coordination, catering, and venue all included.",
-        options: [
-            { label: "💒 Wedding packages", next: "wedding" },
-            { label: "💰 All packages", next: "packages" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    wedding: {
-        label: "Weddings at Ship Hauz",
-        reply: "Say 'I do' at Bohol's most iconic venue! Our wedding packages include full catering, coordination, venue styling, and accommodation for the couple. Contact us for a custom quote tailored to your dream day.",
-        options: [
-            { label: "📞 Contact us", next: "contact" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    dining: {
-        label: "Dining & Catering",
-        reply: "Savor fresh Bohol flavors at our on-site restaurant! Dining starts at ₱350/person. We also offer custom catering services for groups of all sizes — barkada, family reunions, corporate events.",
-        options: [
-            { label: "🎉 Catering for events", next: "events" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    photo: {
-        label: "Photography Venue",
-        reply: "The Ship Hauz is Bohol's most photographed landmark! Photography sessions start at ₱2,500. Perfect for prenuptial shoots, fashion photography, debut pictorials, and commercial production.",
-        options: [
-            { label: "📅 How to book", next: "howtobook" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    location: {
-        label: "Location & Hours",
-        reply: "📍 Butal Ship Hauz, Talibon, Bohol, Philippines\n🕐 Open daily: 7:00 AM – 9:00 PM\n📞 Reservations: 8:00 AM – 6:00 PM\n📱 +63 (0) 912 345 6789",
-        options: [
-            { label: "🗺️ Get directions", next: "directions" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    directions: {
-        label: "Directions",
-        reply: "We're located in Talibon, the gateway to Northern Bohol's hidden gems. From Tagbilaran City, take a bus or van to Talibon (approx. 2–3 hours). Ask locals for 'Butal Ship Hauz' — everyone knows it! 😄",
-        options: [
-            { label: "📞 Call for pickup info", next: "contact" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    contact: {
-        label: "Contact Us",
-        reply: "Our crew is ready to help!\n📱 +63 (0) 912 345 6789\n✉️ reservations@butalshiphauz.com.ph\n\nFor reservations and inquiries, we respond within 24 hours.",
-        options: [{ label: "⬅️ Back to menu", next: "main" }],
-    },
-    packages: {
-        label: "Our Packages",
-        reply: "🌅 Day Tour – ₱999 (venue access, 1 meal, guided tour)\n🌙 Overnight – ₱2,499 (room, 3 meals, island tour, venue access)\n🗓️ Weekend – ₱4,299 (2 nights, all meals, 2 tours, event hall)\n\nCustom packages also available — contact us!",
-        options: [
-            { label: "📞 Get a custom quote", next: "contact" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-    howtobook: {
-        label: "How to Book",
-        reply: "Booking is easy! 3 ways to reserve:\n1️⃣ Call us at +63 (0) 912 345 6789\n2️⃣ Email reservations@butalshiphauz.com.ph\n3️⃣ Use the 'Book a Reservation' button on this page\n\nA 50% down payment is required to confirm bookings.",
-        options: [
-            { label: "📞 Contact details", next: "contact" },
-            { label: "⬅️ Back to menu", next: "main" },
-        ],
-    },
-};
-
 function handleOption(option) {
-    const menu = chatMenus[chatStep.value];
     chatMessages.value.push({ from: "user", text: option.label });
     chatTyping.value = true;
 
     setTimeout(() => {
         chatTyping.value = false;
-        const nextMenu = chatMenus[option.next];
-        if (nextMenu) {
-            if (nextMenu.reply) {
-                chatMessages.value.push({ from: "bot", text: nextMenu.reply });
-            }
-            chatStep.value = option.next;
-            if (nextMenu.options) {
+
+        const nextNodeId = option.next_node_id;
+
+        // 0 or null means "back to main"
+        const targetId = (!nextNodeId || nextNodeId === 0)
+            ? mainNodeId.value
+            : nextNodeId;
+
+        const targetNode = nodes.value[targetId];
+
+        if (targetNode) {
+            chatMessages.value.push({ from: "bot", text: targetNode.message });
+            chatCurrentNodeId.value = targetId;
+
+            if (targetNode.options && targetNode.options.length > 0) {
                 chatMessages.value.push({
                     from: "options",
-                    label: nextMenu.label,
-                    options: nextMenu.options,
+                    label: targetNode.node_key,
+                    options: targetNode.options,
                 });
             }
         }
+
         scrollChat();
     }, 600);
 }
@@ -174,13 +80,20 @@ function scrollChat() {
 
 function openChat() {
     chatOpen.value = true;
-    if (chatMessages.value.length === 1) {
-        chatMessages.value.push({
-            from: "options",
-            label: chatMenus.main.label,
-            options: chatMenus.main.options,
-        });
+
+    // Show main menu options on first open (if not already shown)
+    const hasOptions = chatMessages.value.some((m) => m.from === "options");
+    if (!hasOptions && mainNodeId.value) {
+        const main = nodes.value[mainNodeId.value];
+        if (main?.options?.length) {
+            chatMessages.value.push({
+                from: "options",
+                label: main.node_key,
+                options: main.options,
+            });
+        }
     }
+
     scrollChat();
 }
 </script>
@@ -225,12 +138,14 @@ function openChat() {
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <span
-                                    class="w-1.5 h-1.5 bg-green-400 rounded-full"
+                                    class="w-1.5 h-1.5 rounded-full"
+                                    :class="loading ? 'bg-yellow-400' : error ? 'bg-red-400' : 'bg-green-400'"
                                 ></span>
                                 <span
                                     class="font-mono text-white/45 text-[10px] tracking-wider"
-                                    >Online now</span
                                 >
+                                    {{ loading ? 'Connecting...' : error ? 'Offline' : 'Online now' }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -252,7 +167,12 @@ function openChat() {
                     class="flex-1 overflow-y-auto px-4 py-4 space-y-3"
                     style="min-height: 0"
                 >
-                    <template v-for="(msg, i) in chatMessages" :key="i">
+                    <!-- Loading skeleton -->
+                    <div v-if="loading" class="flex items-center justify-center h-full">
+                        <div class="text-white/40 text-sm font-mono">Loading...</div>
+                    </div>
+
+                    <template v-else v-for="(msg, i) in chatMessages" :key="i">
                         <!-- Bot message -->
                         <div
                             v-if="msg.from === 'bot'"
@@ -280,6 +200,7 @@ function openChat() {
                                 {{ msg.text }}
                             </div>
                         </div>
+
                         <!-- User message -->
                         <div
                             v-else-if="msg.from === 'user'"
@@ -292,12 +213,11 @@ function openChat() {
                                 {{ msg.text }}
                             </div>
                         </div>
+
                         <!-- Options -->
                         <div v-else-if="msg.from === 'options'" class="pl-8">
                             <p
-                                v-if="
-                                    msg.label && i === chatMessages.length - 1
-                                "
+                                v-if="i === chatMessages.length - 1"
                                 class="font-mono text-white/40 text-[10px] tracking-wider uppercase mb-2"
                             >
                                 {{ msg.label }}
@@ -312,8 +232,7 @@ function openChat() {
                                     @click="handleOption(opt)"
                                     class="chat-option-btn text-left font-body text-[12px] text-brass hover:text-navy hover:bg-brass px-3 py-2 rounded-md transition-all duration-150"
                                     style="
-                                        border: 1px solid
-                                            rgba(196, 137, 58, 0.35);
+                                        border: 1px solid rgba(196, 137, 58, 0.35);
                                     "
                                 >
                                     {{ opt.label }}
@@ -321,6 +240,7 @@ function openChat() {
                             </div>
                         </div>
                     </template>
+
                     <!-- Typing indicator -->
                     <div v-if="chatTyping" class="flex items-start gap-2">
                         <div
@@ -399,8 +319,8 @@ function openChat() {
         ></span>
     </div>
 </template>
+
 <style scoped>
-/* ── Chat FAB animation ── */
 .chat-pop-enter-active {
     transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -417,8 +337,6 @@ function openChat() {
     transform: scale(0.9) translateY(8px);
     transform-origin: bottom right;
 }
-
-/* ── Icon swap ── */
 .icon-swap-enter-active,
 .icon-swap-leave-active {
     transition: all 0.15s ease;
@@ -431,8 +349,6 @@ function openChat() {
     opacity: 0;
     transform: scale(0.7) rotate(20deg);
 }
-
-/* ── Typing indicator ── */
 .typing-dots span {
     display: inline-block;
     width: 5px;
@@ -441,24 +357,12 @@ function openChat() {
     border-radius: 50%;
     animation: typingbounce 1.2s ease-in-out infinite;
 }
-.typing-dots span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-.typing-dots span:nth-child(3) {
-    animation-delay: 0.4s;
-}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes typingbounce {
-    0%,
-    60%,
-    100% {
-        transform: translateY(0);
-    }
-    30% {
-        transform: translateY(-5px);
-    }
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
 }
-
-/* ── Chat FAB shadow ── */
 .chat-fab {
     box-shadow: 0 8px 24px rgba(196, 137, 58, 0.35);
 }
