@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ChatBotNodeController;
 use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
@@ -78,9 +79,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/update-status/{user}', [UserController::class, 'updateStatus'])->name('update-status');
     });
 
-    Route::get('/chat-nodes', function () {
-        return Inertia::render('Admin/ChatNodes');
-    })->name('chat-nodes');
+    Route::prefix('chat-nodes')->name('chat-nodes.')->group(function () {
+        Route::get('/', [ChatBotNodeController::class, 'index'])->name('index');
+        Route::post('/store', [ChatBotNodeController::class, 'store'])->name('store');
+        Route::put('/update/{chatBotNode}', [ChatBotNodeController::class, 'update'])->name('update');
+        Route::delete('/destroy/{chatBotNode}', [ChatBotNodeController::class, 'destroy'])->name('destroy');
+    });
 
     Route::get('/chat-node-options', function () {
         return Inertia::render('Admin/ChatNodeOptions');

@@ -44,7 +44,7 @@ const sidebarMenus = [
         menuName: "Chatbot Management",
         icon: "fa-solid fa-robot",
         children: [
-            { menuName: "Nodes", route: route("admin.chat-nodes") },
+            { menuName: "Nodes", route: route("admin.chat-nodes.index") },
             {
                 menuName: "Node Options",
                 route: route("admin.chat-node-options"),
