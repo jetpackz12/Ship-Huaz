@@ -40,10 +40,8 @@ class VenuePackageController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string|int $id)
+    public function update(Request $request, VenuePackage $venuePackage)
     {
-        $venuePackage = VenuePackage::findOrFail($id);
-
         $request->validate([
             'title' => 'required|min:3|unique:venue_packages,title,' . $venuePackage->id,
             'description' => 'required|min:3',
@@ -60,9 +58,8 @@ class VenuePackageController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string|int $id)
+    public function destroy(VenuePackage $venuePackage)
     {
-        $venuePackage = VenuePackage::findOrFail($id);
         $venuePackage->delete();
 
         return redirect()->route('admin.venue-packages.index')->with('success', 'Venue Package deleted successfully.');

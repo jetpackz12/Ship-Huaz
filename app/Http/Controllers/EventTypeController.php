@@ -37,10 +37,8 @@ class EventTypeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string|int $id)
+    public function update(Request $request, EventType $eventType)
     {
-        $eventType = EventType::findOrFail($id);
-
         $request->validate([
             'type' => 'required|min:3|unique:event_types,type,' . $eventType->id,
             'status' => 'required|in:active,inactive',
@@ -54,9 +52,8 @@ class EventTypeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string|int $id)
+    public function destroy(EventType $eventType)
     {
-        $eventType = EventType::findOrFail($id);
         $eventType->delete();
 
         return redirect()->route('admin.event-types.index')->with('success', 'Event Type deleted successfully.');
