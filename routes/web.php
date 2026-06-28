@@ -26,7 +26,11 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('client.')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-    Route::get('/booking', [BookingController::class, 'index'])->name('booking');
+    Route::prefix('booking')->name('booking.')->group(function () {
+        Route::get('/', [BookingController::class, 'index'])->name('index');
+        Route::post('/store', [BookingController::class, 'store'])->name('store');
+        Route::post('/check-availability', [BookingController::class, 'checkAvailability'])->name('check-availability');
+    });
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
 

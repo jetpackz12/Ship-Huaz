@@ -10,7 +10,7 @@ const sidebarMenus = [
     { menuName: "Home", route: route("client.home"), icon: "fa-solid fa-home" },
     {
         menuName: "Booking",
-        route: route("client.booking"),
+        route: route("client.booking.index"),
         icon: "fa-solid fa-book-bookmark",
     },
     {

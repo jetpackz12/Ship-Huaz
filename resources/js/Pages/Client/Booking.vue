@@ -2,9 +2,22 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import CalendarPicker from "@/Components/CalendarPicker.vue";
 import Table from "@/Components/Table.vue";
-import { Head } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import axios from "axios";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { ref, computed, watch } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
+
+const props = defineProps({
+    bookings: Array,
+    eventTypes: Array,
+    venuePackages: Array,
+    packageAddOns: Array,
+    paymentOptions: Array,
+});
+
+const page = usePage();
+
+const errors = computed(() => page.props.errors ?? {});
 
 // ─── View Mode ─────────────────────────────────────────────────────────────
 const showForm = ref(false);
@@ -21,152 +34,23 @@ const tableColumns = [
 ];
 
 // ─── Table: Default Data ───────────────────────────────────────────────────
-const tableData = ref([
-    {
-        ref: "BSH-QYQ70ZOW",
-        event: "Birthday Party",
-        date: "2026-06-18",
-        time: "8:00 AM – 8:00 PM",
-        package: "Upper Deck Experience",
-        addons: "Captain's Experience, Catering Package, Event Decoration, Photo & Video Coverage, Sound System, Guest Entry Passes",
-        amount: 15500,
-        payment_method: "GCash",
-        payment_ref: "Ref#12312312312",
-        status: "paid",
-    },
-    {
-        ref: "BSH-XKL29MNP",
-        event: "Wedding Reception",
-        date: "2026-05-10",
-        time: "4:00 PM – 10:00 PM",
-        package: "Premium Deck Package",
-        addons: "Catering Package, Event Decoration, Photo & Video Coverage",
-        amount: 28000,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#98765432100",
-        status: "paid",
-    },
-    {
-        ref: "BSH-RTA88QWE",
-        event: "Corporate Event",
-        date: "2026-07-04",
-        time: "9:00 AM – 5:00 PM",
-        package: "Main Hall Experience",
-        addons: "Sound System, Guest Entry Passes",
-        amount: 12000,
-        payment_method: "GCash",
-        payment_ref: "Ref#11223344556",
-        status: "pending",
-    },
-    {
-        ref: "BSH-MNB55CXZ",
-        event: "Debut",
-        date: "2026-08-20",
-        time: "6:00 PM – 11:00 PM",
-        package: "Upper Deck Experience",
-        addons: "Event Decoration, Photo & Video Coverage, Sound System",
-        amount: 18500,
-        payment_method: "Cash",
-        payment_ref: "—",
-        status: "confirmed",
-    },
-    {
-        ref: "BSH-LOP11WER",
-        event: "Reunion",
-        date: "2026-04-01",
-        time: "10:00 AM – 4:00 PM",
-        package: "Standard Package",
-        addons: "Catering Package",
-        amount: 7500,
-        payment_method: "GCash",
-        payment_ref: "Ref#55667788990",
-        status: "cancelled",
-    },
-    {
-        ref: "BSH-TYU33IOP",
-        event: "Anniversary",
-        date: "2026-03-15",
-        time: "7:00 PM – 11:00 PM",
-        package: "Sunset Deck Package",
-        addons: "Event Decoration, Photo & Video Coverage",
-        amount: 9800,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#44332211009",
-        status: "paid",
-    },
-    {
-        ref: "BSH-GHJ77KLM",
-        event: "Graduation Party",
-        date: "2026-02-28",
-        time: "5:00 PM – 10:00 PM",
-        package: "Standard Package",
-        addons: "Sound System, Photo & Video Coverage",
-        amount: 8500,
-        payment_method: "GCash",
-        payment_ref: "Ref#77889900112",
-        status: "paid",
-    },
-    {
-        ref: "BSH-ZXC44VBN",
-        event: "Birthday Party",
-        date: "2025-12-10",
-        time: "3:00 PM – 9:00 PM",
-        package: "Main Hall Experience",
-        addons: "Catering Package, Event Decoration",
-        amount: 11200,
-        payment_method: "Cash",
-        payment_ref: "—",
-        status: "paid",
-    },
-    {
-        ref: "BSH-QAZ99WSX",
-        event: "Corporate Event",
-        date: "2026-09-15",
-        time: "8:00 AM – 6:00 PM",
-        package: "Premium Deck Package",
-        addons: "Sound System, Guest Entry Passes, Photo & Video Coverage",
-        amount: 22000,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#33221100998",
-        status: "confirmed",
-    },
-    {
-        ref: "BSH-EDC11RFV",
-        event: "Wedding Reception",
-        date: "2025-11-05",
-        time: "5:00 PM – 11:00 PM",
-        package: "Upper Deck Experience",
-        addons: "Catering Package, Event Decoration, Photo & Video Coverage, Sound System",
-        amount: 31500,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#66554433221",
-        status: "paid",
-    },
-    {
-        ref: "BSH-TGB22YHN",
-        event: "Reunion",
-        date: "2026-10-01",
-        time: "11:00 AM – 5:00 PM",
-        package: "Standard Package",
-        addons: "Guest Entry Passes",
-        amount: 6000,
-        payment_method: "GCash",
-        payment_ref: "Ref#99887766554",
-        status: "pending",
-    },
-    {
-        ref: "BSH-UJM55IKO",
-        event: "Debut",
-        date: "2025-10-20",
-        time: "6:00 PM – 11:00 PM",
-        package: "Sunset Deck Package",
-        addons: "Event Decoration, Photo & Video Coverage, Catering Package",
-        amount: 17000,
-        payment_method: "GCash",
-        payment_ref: "Ref#12398745600",
-        status: "cancelled",
-    },
-]);
+const tableData = computed(() =>
+    (props.bookings ?? []).map((b) => ({
+        ref: b.booking_ref,
+        event: b.event_type?.type ?? "—",
+        date: b.date,
+        time: b.time_slot,
+        package: b.venue_package?.title ?? "—",
+        addons:
+            Array.isArray(b.package_add_ons) && b.package_add_ons.length
+                ? b.package_add_ons.map((a) => a.title ?? a).join(", ")
+                : "",
+        amount: b.total_payment,
+        payment_method: b.payment_option?.payment ?? "Pay at Venue",
+        payment_ref: b.payment_transaction_ref ?? "—",
+        status: b.status,
+    })),
+);
 
 const tableActions = {
     isDateFilterShow: false,
@@ -200,108 +84,112 @@ const today = new Date().toISOString().split("T")[0];
 
 const timeSlots = [
     { id: "morning", label: "Morning", time: "8:00 AM – 12:00 PM" },
-    {
-        id: "afternoon",
-        label: "Afternoon",
-        time: "1:00 PM – 5:00 PM",
-    },
-    { id: "evening", label: "Evening", time: "6:00 PM – 10:00 PM" },
-    { id: "fullday", label: "Full Day", time: "8:00 AM – 8:00 PM" },
-    {
-        id: "overnight",
-        label: "Overnight",
-        time: "8:00 PM – 8:00 AM",
-    },
+    { id: "afternoon", label: "Afternoon", time: "1:00 PM – 5:00 PM" },
+    { id: "fullday", label: "Full Day", time: "8:00 AM – 5:00 PM" },
 ];
 
-const eventTypes = [
-    "Birthday Party",
-    "Wedding Reception",
-    "Debut / 18th Birthday",
-    "Corporate Event",
-    "Team Building",
-    "Photo / Video Shoot",
-    "Anniversary Celebration",
-    "Other",
-];
 const eventType = ref("");
+
+const selectedEventTypeLabel = computed(
+    () =>
+        activeEventTypes.value.find((e) => e.id === eventType.value)?.type ??
+        "",
+);
+
+// ─── Step 1: Availability Check ───────────────────────────────────────────
+const availabilityChecked = ref(false);
+const isAvailable = ref(true);
+const isCheckingAvailability = ref(false);
+const availabilityError = ref("");
+
+const checkAvailability = async () => {
+    if (!eventDate.value || !timeSlot.value) return;
+
+    availabilityChecked.value = false;
+    isAvailable.value = true;
+    availabilityError.value = "";
+    isCheckingAvailability.value = true;
+
+    try {
+        const { data } = await axios.post(
+            route("client.booking.check-availability"),
+            {
+                date: eventDate.value,
+                time_slot: timeSlot.value,
+            }
+        );
+
+        isAvailable.value = data.available;
+        availabilityChecked.value = true;
+
+        if (data.available) {
+            nextStep();
+        } else {
+            availabilityError.value =
+                "This date and time slot is already booked. Please choose another.";
+        }
+    } catch (error) {
+        console.error(error);
+        availabilityError.value =
+            "Could not check availability. Please try again.";
+    } finally {
+        isCheckingAvailability.value = false;
+    }
+};
+
+watch([eventDate, timeSlot], () => {
+    availabilityChecked.value = false;
+    isAvailable.value = true;
+    availabilityError.value = "";
+});
+
+// ── Mapped from props.eventTypes ──────────────────────────────────────────
+// Each item has: { id, type, status }
+// We only show active ones; fall back to empty array if prop not yet loaded.
+const activeEventTypes = computed(() =>
+    (props.eventTypes ?? []).filter((e) => e.status === "active"),
+);
 
 const step1Valid = computed(
     () => eventDate.value && timeSlot.value && eventType.value,
 );
 
 // ─── Step 2: Venue Packages & Add-ons ─────────────────────────────────────
-const packages = [
-    {
-        id: "deck",
-        name: "Upper Deck Experience",
-        desc: "Open-air upper deck with panoramic views. Complimentary coffee/juice included.",
-        price: 3500,
-        capacity: "Up to 30 guests",
-    },
-    {
-        id: "main",
-        name: "Main Deck Venue",
-        desc: "Spacious main deck area perfect for celebrations and gatherings.",
-        price: 6500,
-        capacity: "Up to 80 guests",
-    },
-    {
-        id: "fullship",
-        name: "Full Ship Exclusive",
-        desc: "Exclusive use of the entire Butal Ship Hauz — all decks, all areas.",
-        price: 12000,
-        capacity: "Up to 150 guests",
-    },
-    {
-        id: "overnight",
-        name: "Overnight Stay Package",
-        desc: "Private overnight booking for intimate gatherings or special celebrations.",
-        price: 18000,
-        capacity: "Up to 20 guests",
-    },
-];
+// ── Mapped from props.venuePackages ──────────────────────────────────────
+// Schema: { id, title, description, guests, price, status }
+// We normalise to what the template already expects:
+//   name, desc, price, capacity  (plus id for v-model)
+const packages = computed(() =>
+    (props.venuePackages ?? [])
+        .filter((p) => p.status === "active")
+        .map((p) => ({
+            id: p.id,
+            name: p.title,
+            desc: p.description,
+            price: Number(p.price),
+            capacity: `Up to ${p.guests} guests`,
+        })),
+);
 
-const addons = [
-    {
-        id: "captain",
-        name: "Captain's Experience",
-        desc: "Uniforms + immersive ship photo ops for all guests",
-        price: 500,
-    },
-    {
-        id: "catering",
-        name: "Catering Package",
-        desc: "Filipino-style buffet with drinks for your group",
-        price: 3500,
-    },
-    {
-        id: "decor",
-        name: "Event Decoration",
-        desc: "Themed ship décor, balloons, and table setup",
-        price: 2000,
-    },
-    {
-        id: "photo",
-        name: "Photo & Video Coverage",
-        desc: "Professional photographer for the duration of event",
-        price: 4500,
-        icon: "📸",
-    },
-    {
-        id: "sound",
-        name: "Sound System",
-        desc: "PA system with wireless microphone and playlist setup",
-        price: 1500,
-    },
-    {
-        id: "entrypass",
-        name: "Guest Entry Passes",
-        desc: "₱50/head tour access for walk-in attendees",
-        price: 50,
-        perHead: true,
-    },
-];
+// ── Mapped from props.packageAddOns ──────────────────────────────────────
+// Schema: { id, title, description, price, status }
+// "Guest Entry Passes" is the only per-head add-on — detect it by title.
+const addons = computed(() =>
+    (props.packageAddOns ?? [])
+        .filter((a) => a.status === "active")
+        .map((a) => {
+            const isPerHead =
+                a.title.toLowerCase().includes("entry pass") ||
+                a.title.toLowerCase().includes("per head");
+            return {
+                id: a.id,
+                name: a.title,
+                desc: a.description,
+                price: Number(a.price),
+                perHead: isPerHead,
+            };
+        }),
+);
 
 const selectedPackage = ref(null);
 const selectedAddons = ref([]);
@@ -315,10 +203,10 @@ const toggleAddon = (id) => {
 };
 
 const selectedPackageData = computed(() =>
-    packages.find((p) => p.id === selectedPackage.value),
+    packages.value.find((p) => p.id === selectedPackage.value),
 );
 const selectedAddonData = computed(() =>
-    addons.filter((a) => selectedAddons.value.includes(a.id)),
+    addons.value.filter((a) => selectedAddons.value.includes(a.id)),
 );
 
 const packageTotal = computed(() => selectedPackageData.value?.price ?? 0);
@@ -351,17 +239,52 @@ const step3Valid = computed(
 );
 
 // ─── Step 5: Payment ───────────────────────────────────────────────────────
+// ── Mapped from props.paymentOptions ─────────────────────────────────────
+// Schema: { id, payment, number, account, description, status }
+// We keep a "Pay at Venue" fallback so the form always has at least one option.
+const activePaymentOptions = computed(() => {
+    const fromDB = (props.paymentOptions ?? [])
+        .filter((o) => o.status === "active")
+        .map((o) => ({
+            id: o.id,
+            label: o.payment,
+            number: o.number,
+            account: o.account,
+            description: o.description,
+            isOnline: true,
+        }));
+
+    return [
+        ...fromDB,
+        {
+            id: "property",
+            label: "Pay at Venue",
+            icon: "🚢",
+            isOnline: false,
+        },
+    ];
+});
+
 const payment = ref({
-    method: "gcash",
+    method: "",
     accountNumber: "",
     transactionNumber: "",
 });
 
+const initPaymentMethod = () => {
+    if (!payment.value.method && activePaymentOptions.value.length) {
+        payment.value.method = activePaymentOptions.value[0].id;
+    }
+};
+
+initPaymentMethod();
+
+const selectedPaymentOption = computed(() =>
+    activePaymentOptions.value.find((o) => o.id === payment.value.method),
+);
+
 const step5Valid = computed(() => {
-    if (
-        payment.value.method === "gcash" ||
-        payment.value.method === "paymaya"
-    ) {
+    if (selectedPaymentOption.value?.isOnline) {
         return (
             payment.value.accountNumber.trim() !== "" &&
             payment.value.transactionNumber.trim() !== ""
@@ -374,18 +297,28 @@ const step5Valid = computed(() => {
 const reservationCode = ref("");
 
 const confirmReservation = () => {
-    reservationCode.value =
-        "BSH-" + Math.random().toString(36).substr(2, 8).toUpperCase();
+    form.date = eventDate.value;
+    form.time_slot = timeSlot.value;
+    form.event_type_id = eventType.value;
+    form.venue_package_id = selectedPackage.value;
+    form.package_add_ons = selectedAddons.value;
+    form.walk_in_guests = walkInGuests.value;
+    form.guest_first_name = contact.value.firstName;
+    form.guest_last_name = contact.value.lastName;
+    form.guest_email = contact.value.email;
+    form.guest_phone = contact.value.phone;
+    form.guest_count = contact.value.guestCount;
+    form.guest_request_notes = contact.value.requests;
+    form.payment_option_id = payment.value.method;
+    form.payment_account_number = payment.value.accountNumber;
+    form.payment_transaction_ref = payment.value.transactionNumber;
 
-    // Add to table
-    const paymentLabel =
-        payment.value.method === "gcash"
-            ? "GCash"
-            : payment.value.method === "paymaya"
-              ? "Maya"
-              : "Pay at Venue";
-
-    nextStep();
+    form.post(route("client.booking.store"), {
+        onSuccess: (page) => {
+            reservationCode.value = page.props.flash?.booking_ref;
+            nextStep();
+        },
+    });
 };
 
 // ─── Reset Form ────────────────────────────────────────────────────────────
@@ -406,7 +339,7 @@ const resetForm = () => {
         requests: "",
     };
     payment.value = {
-        method: "gcash",
+        method: activePaymentOptions.value[0]?.id ?? "",
         accountNumber: "",
         transactionNumber: "",
     };
@@ -414,8 +347,26 @@ const resetForm = () => {
     showForm.value = false;
 };
 
+const form = useForm({
+    date: "",
+    time_slot: "",
+    event_type_id: "",
+    venue_package_id: null,
+    package_add_ons: [],
+    walk_in_guests: 0,
+    guest_first_name: "",
+    guest_last_name: "",
+    guest_email: "",
+    guest_phone: "",
+    guest_count: 20,
+    guest_request_notes: "",
+    payment_option_id: "",
+    payment_account_number: "",
+    payment_transaction_ref: "",
+});
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
-const fmt = (n) => "₱" + n.toLocaleString("en-PH");
+const fmt = (n) => "₱" + Number(n).toLocaleString("en-PH");
 
 const fmtDate = (d) =>
     d
@@ -428,7 +379,7 @@ const fmtDate = (d) =>
         : "—";
 
 const selectedTimeSlotData = computed(() =>
-    timeSlots.find((t) => t.id === timeSlot.value),
+    timeSlots.find((t) => t.time === timeSlot.value),
 );
 
 const statusConfig = {
@@ -524,9 +475,9 @@ const { formatDate, formatAmount } = useFormatter();
                             <span class="font-medium">{{
                                 row.payment_method
                             }}</span>
-                            <span class="block text-gray-400 text-xs">{{
-                                row.payment_ref
-                            }}</span>
+                            <span class="block text-gray-400 text-xs"
+                                >Ref: {{ row.payment_ref }}</span
+                            >
                         </template>
 
                         <template #status="{ value }">
@@ -548,7 +499,6 @@ const { formatDate, formatAmount } = useFormatter();
             <!-- BOOKING FORM VIEW                                          -->
             <!-- ══════════════════════════════════════════════════════════ -->
             <div v-if="showForm">
-                <!-- Back to Table (only while filling form, not on confirmed) -->
                 <div v-if="currentStep < 6" class="mb-4">
                     <button
                         @click="
@@ -633,6 +583,24 @@ const { formatDate, formatAmount } = useFormatter();
                 <div
                     class="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden"
                 >
+                    <!-- Error Banner -->
+                    <div
+                        v-if="Object.keys(errors).length"
+                        class="mx-8 mt-4 bg-red-50 border border-red-200 rounded-xl px-5 py-4"
+                    >
+                        <p class="text-sm font-semibold text-red-700 mb-1">
+                            Please fix the following errors:
+                        </p>
+                        <ul class="list-disc list-inside space-y-0.5">
+                            <li
+                                v-for="(error, field) in errors"
+                                :key="field"
+                                class="text-xs text-red-600"
+                            >
+                                {{ error }}
+                            </li>
+                        </ul>
+                    </div>
                     <!-- ── STEP 1: EVENT DATE & TIME ──────────────────────── -->
                     <div v-if="currentStep === 1" class="p-8">
                         <div class="flex items-center gap-2 mb-1">
@@ -665,10 +633,10 @@ const { formatDate, formatAmount } = useFormatter();
                                 <button
                                     v-for="slot in timeSlots"
                                     :key="slot.id"
-                                    @click="timeSlot = slot.id"
+                                    @click="timeSlot = slot.time"
                                     :class="[
                                         'text-left border-2 rounded-xl p-4 transition-all duration-150',
-                                        timeSlot === slot.id
+                                        timeSlot === slot.time
                                             ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100'
                                             : 'border-stone-200 hover:border-stone-300',
                                     ]"
@@ -701,11 +669,11 @@ const { formatDate, formatAmount } = useFormatter();
                                     Select event type…
                                 </option>
                                 <option
-                                    v-for="type in eventTypes"
-                                    :key="type"
-                                    :value="type"
+                                    v-for="type in activeEventTypes"
+                                    :key="type.id"
+                                    :value="type.id"
                                 >
-                                    {{ type }}
+                                    {{ type.type }}
                                 </option>
                             </select>
                         </div>
@@ -717,11 +685,26 @@ const { formatDate, formatAmount } = useFormatter();
                             <span class="text-2xl">⚓</span>
                             <div>
                                 <p class="text-sm font-semibold text-stone-800">
-                                    {{ eventType }}
+                                    {{ selectedEventTypeLabel }}
                                 </p>
                                 <p class="text-xs text-stone-500">
                                     {{ fmtDate(eventDate) }} &bull;
                                     {{ selectedTimeSlotData?.time }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="availabilityError"
+                            class="mt-4 bg-red-50 border border-red-200 rounded-xl px-5 py-4 flex items-start gap-3"
+                        >
+                            <span class="text-red-500 text-lg">⚠️</span>
+                            <div>
+                                <p class="text-sm font-semibold text-red-700">
+                                    Slot Unavailable
+                                </p>
+                                <p class="text-xs text-red-600 mt-0.5">
+                                    {{ availabilityError }}
                                 </p>
                             </div>
                         </div>
@@ -828,7 +811,7 @@ const { formatDate, formatAmount } = useFormatter();
                             </div>
 
                             <div
-                                v-if="selectedAddons.includes('entrypass')"
+                                v-if="selectedAddonData.some((a) => a.perHead)"
                                 class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4"
                             >
                                 <p
@@ -888,6 +871,7 @@ const { formatDate, formatAmount } = useFormatter();
                                     v-model="contact.firstName"
                                     type="text"
                                     placeholder="Juan"
+                                    required
                                     class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
@@ -900,6 +884,7 @@ const { formatDate, formatAmount } = useFormatter();
                                     v-model="contact.lastName"
                                     type="text"
                                     placeholder="dela Cruz"
+                                    required
                                     class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
@@ -912,6 +897,7 @@ const { formatDate, formatAmount } = useFormatter();
                                     v-model="contact.email"
                                     type="email"
                                     placeholder="juan@email.com"
+                                    required
                                     class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
@@ -923,7 +909,9 @@ const { formatDate, formatAmount } = useFormatter();
                                 <input
                                     v-model="contact.phone"
                                     type="tel"
-                                    placeholder="+63 9XX XXX XXXX"
+                                    placeholder="9123456789"
+                                    pattern="^9\d{9}$"
+                                    maxlength="10"
                                     class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
@@ -1009,7 +997,7 @@ const { formatDate, formatAmount } = useFormatter();
                                 <span class="text-stone-700">Event Type</span>
                                 <span
                                     class="font-semibold text-stone-800 text-right"
-                                    >{{ eventType }}</span
+                                    >{{ selectedEventTypeLabel }}</span
                                 >
                                 <span class="text-stone-700">Date</span>
                                 <span
@@ -1143,19 +1131,7 @@ const { formatDate, formatAmount } = useFormatter();
 
                         <div class="flex gap-3 mb-8">
                             <button
-                                v-for="m in [
-                                    { id: 'gcash', label: 'GCash', icon: '📱' },
-                                    {
-                                        id: 'paymaya',
-                                        label: 'Maya',
-                                        icon: '💜',
-                                    },
-                                    {
-                                        id: 'property',
-                                        label: 'Pay at Venue',
-                                        icon: '🚢',
-                                    },
-                                ]"
+                                v-for="m in activePaymentOptions"
                                 :key="m.id"
                                 @click="
                                     payment.method = m.id;
@@ -1170,139 +1146,91 @@ const { formatDate, formatAmount } = useFormatter();
                                 ]"
                             >
                                 <span class="text-lg block mb-1">{{
-                                    m.icon
+                                    m.icon ?? "💳"
                                 }}</span>
                                 {{ m.label }}
                             </button>
                         </div>
 
                         <div
-                            v-if="payment.method === 'gcash'"
+                            v-if="selectedPaymentOption?.isOnline"
                             class="space-y-5"
                         >
                             <div
-                                class="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3"
+                                class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3"
                             >
-                                <span class="text-2xl">📱</span>
+                                <span class="text-2xl">💳</span>
                                 <div>
                                     <p
-                                        class="text-sm font-semibold text-green-800 mb-0.5"
+                                        class="text-sm font-semibold text-blue-800 mb-0.5"
                                     >
-                                        Send your GCash payment to:
+                                        Send your
+                                        {{ selectedPaymentOption.label }}
+                                        payment to:
                                     </p>
                                     <p
-                                        class="text-lg font-bold text-green-700 tracking-widest"
+                                        class="text-lg font-bold text-blue-700 tracking-widest"
                                     >
-                                        0917 XXX XXXX
+                                        {{ selectedPaymentOption.number }}
                                     </p>
-                                    <p class="text-xs text-green-600 mt-0.5">
+                                    <p class="text-xs text-blue-600 mt-0.5">
                                         Account Name:
-                                        <strong>Butal Ship Hauz</strong>
+                                        <strong>{{
+                                            selectedPaymentOption.account
+                                        }}</strong>
                                     </p>
                                     <p class="text-xs text-stone-500 mt-2">
-                                        After sending, fill in your details
-                                        below so we can verify your payment.
+                                        {{ selectedPaymentOption.description }}
                                     </p>
                                 </div>
                             </div>
                             <div>
                                 <label
                                     class="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2"
-                                    >Your GCash Account Number *</label
                                 >
+                                    Your
+                                    {{ selectedPaymentOption.label }} Account
+                                    Number *
+                                </label>
                                 <input
                                     v-model="payment.accountNumber"
                                     type="tel"
-                                    placeholder="09XX XXX XXXX"
+                                    placeholder="9123456789"
+                                    pattern="^9\d{9}$"
+                                    maxlength="10"
+                                    required
                                     class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                             </div>
                             <div>
                                 <label
                                     class="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2"
-                                    >GCash Transaction Reference Number *</label
                                 >
+                                    {{ selectedPaymentOption.label }}
+                                    Transaction Reference Number *
+                                </label>
                                 <input
                                     v-model="payment.transactionNumber"
                                     type="text"
                                     placeholder="e.g. 1234567890"
+                                    required
                                     class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
-                                <p class="text-xs text-stone-400 mt-1.5">
-                                    You can find this in your GCash app under
-                                    <strong>Transaction History</strong>.
-                                </p>
                             </div>
                         </div>
 
                         <div
-                            v-if="payment.method === 'paymaya'"
-                            class="space-y-5"
-                        >
-                            <div
-                                class="bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3"
-                            >
-                                <span class="text-2xl">💜</span>
-                                <div>
-                                    <p
-                                        class="text-sm font-semibold text-purple-800 mb-0.5"
-                                    >
-                                        Send your Maya payment to:
-                                    </p>
-                                    <p
-                                        class="text-lg font-bold text-purple-700 tracking-widest"
-                                    >
-                                        0917 XXX XXXX
-                                    </p>
-                                    <p class="text-xs text-purple-600 mt-0.5">
-                                        Account Name:
-                                        <strong>Butal Ship Hauz</strong>
-                                    </p>
-                                    <p class="text-xs text-stone-500 mt-2">
-                                        After sending, fill in your details
-                                        below so we can verify your payment.
-                                    </p>
-                                </div>
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2"
-                                    >Your Maya Account Number *</label
-                                >
-                                <input
-                                    v-model="payment.accountNumber"
-                                    type="tel"
-                                    placeholder="09XX XXX XXXX"
-                                    class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2"
-                                    >Maya Transaction Reference Number *</label
-                                >
-                                <input
-                                    v-model="payment.transactionNumber"
-                                    type="text"
-                                    placeholder="e.g. TXN-1234567890"
-                                    class="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                                <p class="text-xs text-stone-400 mt-1.5">
-                                    You can find this in your Maya app under
-                                    <strong>Transaction History</strong>.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="payment.method === 'property'"
+                            v-if="
+                                !selectedPaymentOption?.isOnline &&
+                                payment.method === 'property'
+                            "
                             class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-800"
                         >
                             🚢 You'll settle the full amount of
-                            <strong>{{ fmt(grandTotal) }}</strong> upon arrival
-                            at Butal Ship Hauz, Talibon, Bohol. Your booking
-                            will be held pending confirmation by our team within
-                            24 hours.
+                            <strong>{{ fmt(grandTotal) }}</strong>
+                            upon arrival at Butal Ship Hauz, Talibon, Bohol.
+                            Your booking will be held pending confirmation by
+                            our team within 24 hours.
                         </div>
                     </div>
 
@@ -1359,7 +1287,7 @@ const { formatDate, formatAmount } = useFormatter();
 
                         <div class="text-sm text-stone-600 space-y-1 mb-8">
                             <p>🚢 Butal Ship Hauz, Talibon, Bohol</p>
-                            <p>🎉 {{ eventType }}</p>
+                            <p>🎉 {{ selectedEventTypeLabel }}</p>
                             <p>📅 {{ fmtDate(eventDate) }}</p>
                             <p>🕐 {{ selectedTimeSlotData?.time }}</p>
                             <p>⚓ {{ selectedPackageData?.name }}</p>
@@ -1383,29 +1311,7 @@ const { formatDate, formatAmount } = useFormatter();
                             class="flex flex-col sm:flex-row items-center justify-center gap-3"
                         >
                             <button
-                                @click="
-                                    currentStep = 1;
-                                    eventDate = '';
-                                    timeSlot = '';
-                                    eventType = '';
-                                    selectedPackage = null;
-                                    selectedAddons = [];
-                                    walkInGuests = 0;
-                                    contact = {
-                                        firstName: '',
-                                        lastName: '',
-                                        email: '',
-                                        phone: '',
-                                        guestCount: 20,
-                                        requests: '',
-                                    };
-                                    payment = {
-                                        method: 'gcash',
-                                        accountNumber: '',
-                                        transactionNumber: '',
-                                    };
-                                    reservationCode = '';
-                                "
+                                @click="resetForm"
                                 class="text-sm text-blue-700 hover:text-blue-800 font-semibold underline underline-offset-2"
                             >
                                 Book another event
@@ -1452,15 +1358,22 @@ const { formatDate, formatAmount } = useFormatter();
 
                         <button
                             v-else
-                            @click="nextStep"
+                            @click="
+                                currentStep === 1
+                                    ? checkAvailability()
+                                    : nextStep()
+                            "
                             :disabled="
-                                (currentStep === 1 && !step1Valid) ||
+                                (currentStep === 1 &&
+                                    (!step1Valid || isCheckingAvailability)) ||
                                 (currentStep === 2 && !step2Valid) ||
                                 (currentStep === 3 && !step3Valid)
                             "
                             :class="[
                                 'px-8 py-3 rounded-xl font-semibold text-sm transition-all',
-                                (currentStep === 1 && step1Valid) ||
+                                (currentStep === 1 &&
+                                    step1Valid &&
+                                    !isCheckingAvailability) ||
                                 (currentStep === 2 && step2Valid) ||
                                 (currentStep === 3 && step3Valid) ||
                                 currentStep === 4
@@ -1468,11 +1381,20 @@ const { formatDate, formatAmount } = useFormatter();
                                     : 'bg-stone-200 text-stone-400 cursor-not-allowed',
                             ]"
                         >
-                            {{
-                                currentStep === 4
-                                    ? "Proceed to Payment →"
-                                    : "Continue →"
-                            }}
+                            <span
+                                v-if="
+                                    currentStep === 1 && isCheckingAvailability
+                                "
+                            >
+                                Checking…
+                            </span>
+                            <span v-else>
+                                {{
+                                    currentStep === 4
+                                        ? "Proceed to Payment →"
+                                        : "Continue →"
+                                }}
+                            </span>
                         </button>
                     </div>
                 </div>
