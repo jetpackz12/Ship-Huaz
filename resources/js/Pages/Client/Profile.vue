@@ -6,8 +6,12 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import Table from "@/Components/Table.vue";
 import { Head, useForm, usePage } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { computed } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
+
+const props = defineProps({
+    bookings: Array,
+});
 
 const user = usePage().props.auth.user;
 
@@ -50,152 +54,23 @@ const TableColumns = [
     { key: "status", label: "Status", slot: "status" },
 ];
 
-const tableData = ref([
-    {
-        ref: "BSH-QYQ70ZOW",
-        event: "Birthday Party",
-        date: "2026-06-18",
-        time: "8:00 AM – 8:00 PM",
-        package: "Upper Deck Experience",
-        addons: "Captain's Experience, Catering Package, Event Decoration, Photo & Video Coverage, Sound System, Guest Entry Passes",
-        amount: 15500,
-        payment_method: "GCash",
-        payment_ref: "Ref#12312312312",
-        status: "paid",
-    },
-    {
-        ref: "BSH-XKL29MNP",
-        event: "Wedding Reception",
-        date: "2026-05-10",
-        time: "4:00 PM – 10:00 PM",
-        package: "Premium Deck Package",
-        addons: "Catering Package, Event Decoration, Photo & Video Coverage",
-        amount: 28000,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#98765432100",
-        status: "paid",
-    },
-    {
-        ref: "BSH-RTA88QWE",
-        event: "Corporate Event",
-        date: "2026-07-04",
-        time: "9:00 AM – 5:00 PM",
-        package: "Main Hall Experience",
-        addons: "Sound System, Guest Entry Passes",
-        amount: 12000,
-        payment_method: "GCash",
-        payment_ref: "Ref#11223344556",
-        status: "pending",
-    },
-    {
-        ref: "BSH-MNB55CXZ",
-        event: "Debut",
-        date: "2026-08-20",
-        time: "6:00 PM – 11:00 PM",
-        package: "Upper Deck Experience",
-        addons: "Event Decoration, Photo & Video Coverage, Sound System",
-        amount: 18500,
-        payment_method: "Cash",
-        payment_ref: "—",
-        status: "confirmed",
-    },
-    {
-        ref: "BSH-LOP11WER",
-        event: "Reunion",
-        date: "2026-04-01",
-        time: "10:00 AM – 4:00 PM",
-        package: "Standard Package",
-        addons: "Catering Package",
-        amount: 7500,
-        payment_method: "GCash",
-        payment_ref: "Ref#55667788990",
-        status: "cancelled",
-    },
-    {
-        ref: "BSH-TYU33IOP",
-        event: "Anniversary",
-        date: "2026-03-15",
-        time: "7:00 PM – 11:00 PM",
-        package: "Sunset Deck Package",
-        addons: "Event Decoration, Photo & Video Coverage",
-        amount: 9800,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#44332211009",
-        status: "paid",
-    },
-    {
-        ref: "BSH-GHJ77KLM",
-        event: "Graduation Party",
-        date: "2026-02-28",
-        time: "5:00 PM – 10:00 PM",
-        package: "Standard Package",
-        addons: "Sound System, Photo & Video Coverage",
-        amount: 8500,
-        payment_method: "GCash",
-        payment_ref: "Ref#77889900112",
-        status: "paid",
-    },
-    {
-        ref: "BSH-ZXC44VBN",
-        event: "Birthday Party",
-        date: "2025-12-10",
-        time: "3:00 PM – 9:00 PM",
-        package: "Main Hall Experience",
-        addons: "Catering Package, Event Decoration",
-        amount: 11200,
-        payment_method: "Cash",
-        payment_ref: "—",
-        status: "paid",
-    },
-    {
-        ref: "BSH-QAZ99WSX",
-        event: "Corporate Event",
-        date: "2026-09-15",
-        time: "8:00 AM – 6:00 PM",
-        package: "Premium Deck Package",
-        addons: "Sound System, Guest Entry Passes, Photo & Video Coverage",
-        amount: 22000,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#33221100998",
-        status: "confirmed",
-    },
-    {
-        ref: "BSH-EDC11RFV",
-        event: "Wedding Reception",
-        date: "2025-11-05",
-        time: "5:00 PM – 11:00 PM",
-        package: "Upper Deck Experience",
-        addons: "Catering Package, Event Decoration, Photo & Video Coverage, Sound System",
-        amount: 31500,
-        payment_method: "Bank Transfer",
-        payment_ref: "Ref#66554433221",
-        status: "paid",
-    },
-    {
-        ref: "BSH-TGB22YHN",
-        event: "Reunion",
-        date: "2026-10-01",
-        time: "11:00 AM – 5:00 PM",
-        package: "Standard Package",
-        addons: "Guest Entry Passes",
-        amount: 6000,
-        payment_method: "GCash",
-        payment_ref: "Ref#99887766554",
-        status: "pending",
-    },
-    {
-        ref: "BSH-UJM55IKO",
-        event: "Debut",
-        date: "2025-10-20",
-        time: "6:00 PM – 11:00 PM",
-        package: "Sunset Deck Package",
-        addons: "Event Decoration, Photo & Video Coverage, Catering Package",
-        amount: 17000,
-        payment_method: "GCash",
-        payment_ref: "Ref#12398745600",
-        status: "cancelled",
-    },
-]);
+const tableData = computed(() =>
+    (props.bookings ?? []).map((b) => ({
+        ref: b.booking_ref,
+        event: b.event_type?.type ?? "—",
+        date: b.date,
+        time: b.time_slot,
+        package: b.venue_package?.title ?? "—",
+        addons:
+            Array.isArray(b.package_add_ons) && b.package_add_ons.length
+                ? b.package_add_ons.map((a) => a.title ?? a).join(", ")
+                : "",
+        amount: b.total_payment,
+        payment_method: b.payment_option?.payment ?? "Pay at Venue",
+        payment_ref: b.payment_transaction_ref ?? "—",
+        status: b.status,
+    })),
+);
 
 const statusConfig = {
     paid: {

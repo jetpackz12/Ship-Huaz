@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Booking;
+use App\Models\PackageAddOn;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +22,24 @@ class ProfileController extends Controller
 
     public function index()
     {
-        return Inertia::render('Client/Profile');
+        $allAddOns = PackageAddOn::pluck('title', 'id');
+
+        $data = [
+            'bookings' => Booking::with('eventType', 'venuePackage', 'paymentOption')
+                ->latest()
+                ->where('user_id', auth()->user()->id)
+                ->get()
+                ->map(function ($booking) use ($allAddOns) {
+                    $addonIds = $booking->package_add_ons ?? [];
+                    $booking->package_add_ons = collect($addonIds)
+                        ->map(fn($id) => $allAddOns[$id] ?? null)
+                        ->filter()
+                        ->values();
+                    return $booking;
+                }),
+        ];
+
+        return Inertia::render('Client/Profile', $data);
     }
 
     /**
