@@ -7,6 +7,7 @@ use App\Models\EventType;
 use App\Models\PackageAddOn;
 use App\Models\PaymentOption;
 use App\Models\VenuePackage;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -21,6 +22,8 @@ class BookingController extends Controller
 
         $bookings = Booking::with('eventType', 'venuePackage', 'paymentOption')
             ->latest()
+            ->where('user_id', auth()->user()->id)
+            ->whereBetween('created_at', [Carbon::now()->subWeek(), Carbon::now()])
             ->get()
             ->map(function ($booking) use ($allAddOns) {
                 $addonIds = $booking->package_add_ons ?? [];
