@@ -10,6 +10,8 @@ use App\Models\VenuePackage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BookingMail;
 
 class BookingController extends Controller
 {
@@ -51,6 +53,7 @@ class BookingController extends Controller
     public function indexAdmin()
     {
         $bookings = Booking::with('user', 'user.userInfo', 'eventType', 'venuePackage', 'paymentOption')
+            ->orderByRaw('FIELD(status, "pending", "confirmed", "cancelled", "completed")')
             ->latest()
             ->get()
             ->map(function ($booking) {
@@ -172,7 +175,9 @@ class BookingController extends Controller
             'status'                    => 'pending',
         ]);
 
-        return redirect()->route('client.booking.index')->with([
+        $this->sendBookingStatusEmail($booking, 'pending');
+
+        return redirect()->back()->with([
             'booking_ref' => $booking->booking_ref,
             'success'     => 'Booking confirmed successfully.',
         ]);
@@ -216,20 +221,32 @@ class BookingController extends Controller
             'status' => 'required|in:confirmed,cancelled,completed',
         ]);
 
+        $booking->load('user', 'eventType', 'venuePackage');
+
         $booking->update([
             'status' => $request->status,
         ]);
 
-        return redirect()->route('admin.bookings.index')->with([
+
+        $this->sendBookingStatusEmail($booking, $request->status);
+
+        return back()->with([
             'success' => 'Booking status updated successfully.',
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Booking $booking)
+    private function sendBookingStatusEmail(Booking $booking, string $status): void
     {
-        //
+        $booking->load('eventType', 'venuePackage', 'user', 'user.userInfo');
+
+        $guestName = $booking->guest_first_name . ' ' . $booking->guest_last_name;
+        $userEmail  = $booking->user->email ?? null;
+        $userName   = $booking->user->userInfo->first_name . ' ' . $booking->user->userInfo->last_name;
+
+        Mail::to($booking->guest_email)->send(new BookingMail($booking, $status, $guestName));
+
+        if ($userEmail && $userEmail !== $booking->guest_email) {
+            Mail::to($userEmail)->send(new BookingMail($booking, $status, $userName));
+        }
     }
 }

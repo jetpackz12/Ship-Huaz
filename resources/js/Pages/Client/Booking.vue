@@ -15,6 +15,8 @@ const props = defineProps({
     paymentOptions: Array,
 });
 
+const localBookings = ref([...( props.bookings ?? [])]);
+
 const page = usePage();
 
 const errors = computed(() => page.props.errors ?? {});
@@ -35,21 +37,27 @@ const tableColumns = [
 
 // ─── Table: Default Data ───────────────────────────────────────────────────
 const tableData = computed(() =>
-    (props.bookings ?? []).map((b) => ({
-        ref: b.booking_ref,
-        event: b.event_type?.type ?? "—",
-        date: b.date,
-        time: b.time_slot,
-        package: b.venue_package?.title ?? "—",
-        addons:
-            Array.isArray(b.package_add_ons) && b.package_add_ons.length
-                ? b.package_add_ons.map((a) => a.title ?? a).join(", ")
-                : "",
-        amount: b.total_payment,
-        payment_method: b.payment_option?.payment ?? "Pay at Venue",
-        payment_ref: b.payment_transaction_ref ?? "—",
-        status: b.status,
-    })),
+    localBookings.value.map((b) => {
+        // already-mapped rows (from unshift) pass through as-is
+        if (b.ref !== undefined) return b;
+
+        // raw bookings from server props get mapped
+        return {
+            ref: b.booking_ref,
+            event: b.event_type?.type ?? "—",
+            date: b.date,
+            time: b.time_slot,
+            package: b.venue_package?.title ?? "—",
+            addons:
+                Array.isArray(b.package_add_ons) && b.package_add_ons.length
+                    ? b.package_add_ons.map((a) => a.title ?? a).join(", ")
+                    : "",
+            amount: b.total_payment,
+            payment_method: b.payment_option?.payment ?? "Pay at Venue",
+            payment_ref: b.payment_transaction_ref ?? "—",
+            status: b.status,
+        };
+    })
 );
 
 const tableActions = {
@@ -314,8 +322,24 @@ const confirmReservation = () => {
     form.payment_transaction_ref = payment.value.transactionNumber;
 
     form.post(route("client.booking.store"), {
+        preserveState: true,
+        preserveScroll: true,
         onSuccess: (page) => {
             reservationCode.value = page.props.flash?.booking_ref;
+
+             localBookings.value.unshift({
+                ref: page.props.flash?.booking_ref ?? "—",
+                event: selectedEventTypeLabel.value,
+                date: eventDate.value,
+                time: timeSlot.value,
+                package: selectedPackageData.value?.name ?? "—",
+                addons: selectedAddonData.value.map((a) => a.name).join(", "),
+                amount: grandTotal.value,
+                payment_method: selectedPaymentOption.value?.label ?? "Pay at Venue",
+                payment_ref: payment.value.transactionNumber || "—",
+                status: "pending",
+            });
+
             nextStep();
         },
     });

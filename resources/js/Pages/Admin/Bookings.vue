@@ -4,8 +4,8 @@ import Table from "@/Components/Table.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
-import { Link, Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { Link, Head, useForm, usePage } from "@inertiajs/vue3";
+import { ref, watch, computed } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
 import { useModal } from "@/Composables/useModal";
 
@@ -13,7 +13,19 @@ const props = defineProps({
     bookings: Array,
 });
 
+const localBookings = ref([...props.bookings]);
+
+const page = usePage();
+const flash = computed(() => page.props.flash);
+
+watch(flash, (newFlash) => {
+    if (newFlash?.success) {
+        console.log(newFlash.success);
+    }
+});
+
 const tableColumns = [
+    { key: "booking_ref", label: "Booking Ref", slot: "ref" },
     { key: "event_details", label: "Event Details", slot: "event_details" },
     { key: "package", label: "Package", slot: "package" },
     { key: "contact", label: "Contact", slot: "contact" },
@@ -97,7 +109,13 @@ const form = useForm({
 
 const submit = () => {
     form.put(route("admin.bookings.update", form.id), {
-        onSuccess: () => modalClose(),
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            const booking = localBookings.value.find(b => b.id === form.id);
+            if (booking) booking.status = form.status;
+            modalClose();
+        },
     });
 };
 </script>
@@ -117,18 +135,18 @@ const submit = () => {
                 </div>
 
                 <Table
-                    :data="bookings"
+                    :data="localBookings"
                     :columns="tableColumns"
                     :actions="tableActions"
                 >
+                    <!-- Ref -->
+                    <template #ref="{ row }">
+                        <p class="text-sm font-medium text-stone-700">
+                            {{ row.booking_ref }}
+                        </p>
+                    </template>
                     <!-- Event Details -->
                     <template #event_details="{ row }">
-                        <p class="text-sm font-medium text-stone-700">
-                            Ref:
-                            <span class="text-stone-500">{{
-                                row.booking_ref
-                            }}</span>
-                        </p>
                         <p class="text-sm font-medium text-stone-700">
                             {{ row.event_type?.type ?? "—" }}
                         </p>
