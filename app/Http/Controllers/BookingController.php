@@ -83,56 +83,38 @@ class BookingController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $requestedSlot = $request->time_slot;
                     $date = $value;
-
                     $fullDay   = '8:00 AM – 5:00 PM';
                     $morning   = '8:00 AM – 12:00 PM';
                     $afternoon = '1:00 PM – 5:00 PM';
-
                     $conflictingSlots = match ($requestedSlot) {
                         $fullDay   => [$fullDay, $morning, $afternoon],
                         $morning   => [$fullDay, $morning],
                         $afternoon => [$fullDay, $afternoon],
                         default    => [],
                     };
-
                     $exists = Booking::where('date', $date)
                         ->whereIn('time_slot', $conflictingSlots)
                         ->whereIn('status', ['pending', 'confirmed'])
                         ->exists();
-
                     if ($exists) {
                         $fail("The selected date and time slot is unavailable. Please choose a different slot or date.");
                     }
                 },
             ],
-            'time_slot' => ['required', 'string', 'in:8:00 AM – 12:00 PM,1:00 PM – 5:00 PM,8:00 AM – 5:00 PM'],
-            'event_type_id'     => ['required', 'integer', 'exists:event_types,id'],
-
-            'venue_package_id'  => ['required', 'integer', 'exists:venue_packages,id'],
-            'package_add_ons'   => ['nullable', 'array'],
-            'package_add_ons.*' => ['integer', 'exists:package_add_ons,id'],
-            'walk_in_guests'    => ['required', 'integer', 'min:0'],
-
-            'guest_first_name'      => ['required', 'string', 'max:100'],
-            'guest_last_name'       => ['required', 'string', 'max:100'],
-            'guest_email'           => ['required', 'email', 'max:255'],
-            'guest_phone'           => ['required', 'regex:/^9\d{9}$/'],
-            'guest_count'           => ['required', 'integer', 'min:1'],
-            'guest_request_notes'   => ['nullable', 'string', 'max:1000'],
-
+            'time_slot'                 => ['required', 'string', 'in:8:00 AM – 12:00 PM,1:00 PM – 5:00 PM,8:00 AM – 5:00 PM'],
+            'event_type_id'             => ['required', 'integer', 'exists:event_types,id'],
+            'venue_package_id'          => ['required', 'integer', 'exists:venue_packages,id'],
+            'package_add_ons'           => ['nullable', 'array'],
+            'package_add_ons.*'         => ['integer', 'exists:package_add_ons,id'],
+            'guest_first_name'          => ['required', 'string', 'max:100'],
+            'guest_last_name'           => ['required', 'string', 'max:100'],
+            'guest_email'               => ['required', 'email', 'max:255'],
+            'guest_phone'               => ['required', 'regex:/^9\d{9}$/'],
+            'guest_count'               => ['required', 'integer', 'min:1'],
+            'guest_request_notes'       => ['nullable', 'string', 'max:1000'],
             'payment_option_id'         => ['required'],
-            'payment_account_number'    => [
-                'nullable',
-                'required_unless:payment_option_id,property',
-                'string',
-                'max:20',
-            ],
-            'payment_transaction_ref'   => [
-                'nullable',
-                'required_unless:payment_option_id,property',
-                'string',
-                'max:100',
-            ],
+            'payment_account_number'    => ['nullable', 'required_unless:payment_option_id,property', 'string', 'max:20'],
+            'payment_transaction_ref'   => ['nullable', 'required_unless:payment_option_id,property', 'string', 'max:100'],
         ]);
 
         $package = VenuePackage::findOrFail($validated['venue_package_id']);
@@ -141,16 +123,11 @@ class BookingController extends Controller
         if (!empty($validated['package_add_ons'])) {
             $addons = PackageAddOn::whereIn('id', $validated['package_add_ons'])->get();
             foreach ($addons as $addon) {
-                $isPerHead = str_contains(strtolower($addon->title), 'entry pass') ||
-                    str_contains(strtolower($addon->title), 'per head');
-                $addonsTotal += $isPerHead
-                    ? $addon->price * $validated['walk_in_guests']
-                    : $addon->price;
+                $addonsTotal += $addon->price;
             }
         }
 
         $totalPayment = $package->price + $addonsTotal;
-
         $isPayAtVenue = $validated['payment_option_id'] === 'property';
 
         $booking = Booking::create([
@@ -159,7 +136,6 @@ class BookingController extends Controller
             'event_type_id'             => $validated['event_type_id'],
             'venue_package_id'          => $validated['venue_package_id'],
             'package_add_ons'           => $validated['package_add_ons'] ?? [],
-            'walk_in_guests'            => $validated['walk_in_guests'],
             'payment_option_id'         => $isPayAtVenue ? null : $validated['payment_option_id'],
             'payment_account_number'    => $validated['payment_account_number'] ?? null,
             'payment_transaction_ref'   => $validated['payment_transaction_ref'] ?? null,

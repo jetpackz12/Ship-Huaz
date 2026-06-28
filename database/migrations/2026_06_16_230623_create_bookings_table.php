@@ -18,7 +18,6 @@ return new class extends Migration
             $table->foreignId('event_type_id')->constrained()->cascadeOnDelete();
             $table->foreignId('venue_package_id')->constrained()->cascadeOnDelete();
             $table->json('package_add_ons')->nullable();
-            $table->integer('walk_in_guests')->default(0);
             $table->foreignId('payment_option_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('payment_transaction_ref')->nullable();
             $table->string('payment_account_number')->nullable();

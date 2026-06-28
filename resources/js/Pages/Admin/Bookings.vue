@@ -158,9 +158,6 @@ const submit = () => {
                         </p>
                         <p class="text-sm text-stone-500">
                             {{ row.guest_count }} guests
-                            <span v-if="row.walk_in_guests > 0">
-                                + {{ row.walk_in_guests }} walk-in
-                            </span>
                         </p>
                         <p
                             v-if="row.guest_request_notes"

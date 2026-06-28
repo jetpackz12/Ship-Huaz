@@ -185,23 +185,16 @@ const packages = computed(() =>
 const addons = computed(() =>
     (props.packageAddOns ?? [])
         .filter((a) => a.status === "active")
-        .map((a) => {
-            const isPerHead =
-                a.title.toLowerCase().includes("entry pass") ||
-                a.title.toLowerCase().includes("per head");
-            return {
-                id: a.id,
-                name: a.title,
-                desc: a.description,
-                price: Number(a.price),
-                perHead: isPerHead,
-            };
-        }),
+        .map((a) => ({
+            id: a.id,
+            name: a.title,
+            desc: a.description,
+            price: Number(a.price),
+        })),
 );
 
 const selectedPackage = ref(null);
 const selectedAddons = ref([]);
-const walkInGuests = ref(0);
 
 const toggleAddon = (id) => {
     const idx = selectedAddons.value.indexOf(id);
@@ -219,10 +212,7 @@ const selectedAddonData = computed(() =>
 
 const packageTotal = computed(() => selectedPackageData.value?.price ?? 0);
 const addonTotal = computed(() =>
-    selectedAddonData.value.reduce((sum, a) => {
-        if (a.perHead) return sum + a.price * walkInGuests.value;
-        return sum + a.price;
-    }, 0),
+    selectedAddonData.value.reduce((sum, a) => sum + a.price, 0),
 );
 const grandTotal = computed(() => packageTotal.value + addonTotal.value);
 
@@ -310,7 +300,6 @@ const confirmReservation = () => {
     form.event_type_id = eventType.value;
     form.venue_package_id = selectedPackage.value;
     form.package_add_ons = selectedAddons.value;
-    form.walk_in_guests = walkInGuests.value;
     form.guest_first_name = contact.value.firstName;
     form.guest_last_name = contact.value.lastName;
     form.guest_email = contact.value.email;
@@ -353,7 +342,6 @@ const resetForm = () => {
     eventType.value = "";
     selectedPackage.value = null;
     selectedAddons.value = [];
-    walkInGuests.value = 0;
     contact.value = {
         firstName: "",
         lastName: "",
@@ -377,7 +365,6 @@ const form = useForm({
     event_type_id: "",
     venue_package_id: null,
     package_add_ons: [],
-    walk_in_guests: 0,
     guest_first_name: "",
     guest_last_name: "",
     guest_email: "",
@@ -822,53 +809,11 @@ const { formatDate, formatAmount } = useFormatter();
                                             <p
                                                 class="text-xs text-blue-700 font-bold mt-1"
                                             >
-                                                {{ fmt(addon.price)
-                                                }}<span
-                                                    v-if="addon.perHead"
-                                                    class="text-stone-400 font-normal"
-                                                    >/head</span
-                                                >
+                                                {{ fmt(addon.price) }}
                                             </p>
                                         </div>
                                     </div>
                                 </button>
-                            </div>
-
-                            <div
-                                v-if="selectedAddonData.some((a) => a.perHead)"
-                                class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4"
-                            >
-                                <p
-                                    class="text-xs font-semibold text-stone-600 mb-3"
-                                >
-                                    Number of walk-in guests (₱50/head)
-                                </p>
-                                <div class="flex items-center gap-3">
-                                    <button
-                                        @click="
-                                            walkInGuests = Math.max(
-                                                0,
-                                                walkInGuests - 1,
-                                            )
-                                        "
-                                        class="w-10 h-10 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-100 font-bold"
-                                    >
-                                        −
-                                    </button>
-                                    <span
-                                        class="text-stone-800 font-semibold w-8 text-center"
-                                        >{{ walkInGuests }}</span
-                                    >
-                                    <button
-                                        @click="walkInGuests++"
-                                        class="w-10 h-10 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-100 font-bold"
-                                    >
-                                        +
-                                    </button>
-                                    <span class="text-sm text-stone-500 ml-1"
-                                        >= {{ fmt(walkInGuests * 50) }}</span
-                                    >
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1094,11 +1039,7 @@ const { formatDate, formatAmount } = useFormatter();
                                 <span class="text-stone-700"
                                     >{{ addon.icon }} {{ addon.name }}</span
                                 >
-                                <span class="font-semibold text-stone-800">{{
-                                    addon.perHead
-                                        ? fmt(addon.price * walkInGuests)
-                                        : fmt(addon.price)
-                                }}</span>
+                                <span class="font-semibold text-stone-800">{{ fmt(addon.price) }}</span>
                             </div>
                         </div>
 
