@@ -42,9 +42,10 @@ Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('clien
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 
-    Route::get('/bookings', function () {
-        return Inertia::render('Admin/Bookings');
-    })->name('bookings');
+    Route::prefix('bookings')->name('bookings.')->group(function () {
+        Route::get('/', [BookingController::class, 'indexAdmin'])->name('index');
+        Route::put('/update/{booking}', [BookingController::class, 'update'])->name('update');
+    });
 
     // Route::get('/time-slots', function () {
     //     return Inertia::render('Admin/TimeSlots');

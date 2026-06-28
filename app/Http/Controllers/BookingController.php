@@ -46,6 +46,28 @@ class BookingController extends Controller
     }
 
     /**
+     * Display a listing of the resource.
+     */
+    public function indexAdmin()
+    {
+        $bookings = Booking::with('user', 'user.userInfo', 'eventType', 'venuePackage', 'paymentOption')
+            ->latest()
+            ->get()
+            ->map(function ($booking) {
+                $addonIds = $booking->package_add_ons ?? [];
+                $booking->package_add_ons = PackageAddOn::whereIn('id', $addonIds)
+                    ->get(['id', 'title', 'price'])
+                    ->toArray();
+
+                return $booking;
+            });
+
+        return Inertia::render('Admin/Bookings', [
+            'bookings' => $bookings,
+        ]);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -190,7 +212,17 @@ class BookingController extends Controller
      */
     public function update(Request $request, Booking $booking)
     {
-        //
+        $request->validate([
+            'status' => 'required|in:confirmed,cancelled,completed',
+        ]);
+
+        $booking->update([
+            'status' => $request->status,
+        ]);
+
+        return redirect()->route('admin.bookings.index')->with([
+            'success' => 'Booking status updated successfully.',
+        ]);
     }
 
     /**

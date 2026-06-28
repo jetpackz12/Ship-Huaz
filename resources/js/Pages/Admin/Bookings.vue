@@ -9,53 +9,19 @@ import { ref } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
 import { useModal } from "@/Composables/useModal";
 
+const props = defineProps({
+    bookings: Array,
+});
+
 const tableColumns = [
-    { key: "id", label: "ID" },
-    { key: "ref", label: "Booking Ref" },
     { key: "event_details", label: "Event Details", slot: "event_details" },
     { key: "package", label: "Package", slot: "package" },
     { key: "contact", label: "Contact", slot: "contact" },
+    { key: "payment", label: "Payment", slot: "payment" },
     { key: "date", label: "Date", slot: "date" },
     { key: "status", label: "Status", slot: "status" },
     { key: "actions", label: "Actions", slot: "actions" },
 ];
-
-const tableData = ref([
-    {
-        id: 1,
-        ref: "BK-0001",
-        client: "Alex",
-        event_details: [
-            {
-                event_type: "Birthday Party",
-                date: "2026-06-24",
-                time_slot: "Full Day (8:00 AM – 8:00 PM)",
-                guests: 30,
-            },
-        ],
-        package: {
-            title: "Upper Deck Experience",
-            price: "3500",
-            package_add_ons: [
-                { id: 1, title: "Captain's Experience", price: "500" },
-                { id: 2, title: "Catering Package", price: "3500" },
-                { id: 3, title: "Event Decoration", price: "2000" },
-                { id: 4, title: "Photo & Video Coverage", price: "4500" },
-                { id: 5, title: "Sound System", price: "1500" },
-            ],
-        },
-        contact: [
-            {
-                client: "Alex",
-                name: "John Doe",
-                email: "Q8S4F@example.com",
-                phone: "09123456789",
-            },
-        ],
-        date: "2026-06-24",
-        status: "pending",
-    },
-]);
 
 const tableActions = {
     isDateFilterShow: true,
@@ -82,30 +48,57 @@ const statusConfig = {
     },
 };
 
-const { formatAmount, formatDate } = useFormatter();
+const actionConfig = {
+    confirm: {
+        label: "Confirm Booking",
+        icon: "fa-solid fa-check",
+        description: "Are you sure you want to confirm this booking?",
+        status: "confirmed",
+    },
+    cancel: {
+        label: "Cancel Booking",
+        icon: "fa-solid fa-xmark",
+        description: "Are you sure you want to cancel this booking?",
+        status: "cancelled",
+    },
+    complete: {
+        label: "Complete Booking",
+        icon: "fa-solid fa-check-double",
+        description: "Are you sure you want to mark this booking as completed?",
+        status: "completed",
+    },
+};
 
+const { formatAmount, formatDate, formatPhone } = useFormatter();
 const modal = useModal();
+const currentAction = ref(null);
 
-const editStatusModalOpen = (item) => {
+const openStatusModal = (item, action) => {
     form.id = item.id;
+    form.status = actionConfig[action].status;
+    currentAction.value = action;
 
-    modal.title.value = "Edit Status";
+    modal.title.value = actionConfig[action].label;
     modal.type.value = "Status";
-    modal.icon.value = "fa-solid fa-pen-to-square";
+    modal.icon.value = actionConfig[action].icon;
     modal.openModal();
 };
 
 const modalClose = () => {
     form.reset();
+    currentAction.value = null;
     modal.closeModal();
 };
 
 const form = useForm({
     id: "",
+    status: "",
 });
 
 const submit = () => {
-    console.log(form);
+    form.put(route("admin.bookings.update", form.id), {
+        onSuccess: () => modalClose(),
+    });
 };
 </script>
 
@@ -124,68 +117,133 @@ const submit = () => {
                 </div>
 
                 <Table
-                    :data="tableData"
+                    :data="bookings"
                     :columns="tableColumns"
                     :actions="tableActions"
                 >
-                    <template #event_details="{ value }">
-                        <div v-for="item in value" :key="item.id">
-                            <p class="text-sm text-stone-600">
-                                {{ item.event_type }}
-                            </p>
-                            <p class="text-sm text-stone-600">
-                                {{ formatDate(item.date) }}
-                            </p>
-                            <p class="text-sm text-stone-600">
-                                {{ item.time_slot }}
-                            </p>
-                            <p class="text-sm text-stone-600">
-                                {{ item.guests }}
-                            </p>
-                        </div>
-                    </template>
-
-                    <template #package="{ value }">
-                        <p class="text-sm text-stone-600">
-                            {{ value.title }}
+                    <!-- Event Details -->
+                    <template #event_details="{ row }">
+                        <p class="text-sm font-medium text-stone-700">
+                            Ref:
+                            <span class="text-stone-500">{{
+                                row.booking_ref
+                            }}</span>
                         </p>
-                        <p class="text-sm text-stone-600">
-                            {{ formatAmount(value.price) }}
+                        <p class="text-sm font-medium text-stone-700">
+                            {{ row.event_type?.type ?? "—" }}
                         </p>
-                        <hr class="my-1" />
-                        <div v-for="item in value.package_add_ons" :key="item.id">
-                            <p class="text-sm text-stone-600">
-                                {{ item.title }}
-                            </p>
-                            <p class="text-sm text-stone-600">
-                                {{ formatAmount(item.price) }}
-                            </p>
-                        </div>
-                    </template>
-
-                    <template #contact="{ value }">
-                        <div v-for="item in value" :key="item.id">
-                            <p class="text-sm text-stone-600">
-                                Client: {{ item.client }}
-                            </p>
-                            <p class="text-sm text-stone-600">
-                                Guest: {{ item.name }}
-                            </p>
-                            <p class="text-sm text-stone-600">
-                                Email: {{ item.email }}
-                            </p>
-                            <p class="text-sm text-stone-600">
-                                Phone: {{ item.phone }}
-                            </p>
-                        </div>
-                    </template>
-
-                    <template #date="{ value }">
-                        <p class="text-sm text-stone-600">
-                            {{ formatDate(value) }}
+                        <p class="text-sm text-stone-500">
+                            {{ row.date ? formatDate(row.date) : "—" }}
+                        </p>
+                        <p class="text-sm text-stone-500">
+                            {{ row.time_slot ?? "—" }}
+                        </p>
+                        <p class="text-sm text-stone-500">
+                            {{ row.guest_count }} guests
+                            <span v-if="row.walk_in_guests > 0">
+                                + {{ row.walk_in_guests }} walk-in
+                            </span>
+                        </p>
+                        <p
+                            v-if="row.guest_request_notes"
+                            class="text-xs text-stone-400 italic mt-1"
+                        >
+                            "{{ row.guest_request_notes }}"
                         </p>
                     </template>
 
+                    <!-- Package -->
+                    <template #package="{ row }">
+                        <p class="text-sm font-medium text-stone-700">
+                            {{ row.venue_package?.title ?? "—" }}
+                        </p>
+                        <p class="text-sm text-stone-500">
+                            {{
+                                row.venue_package?.price
+                                    ? formatAmount(row.venue_package.price)
+                                    : "—"
+                            }}
+                        </p>
+                        <template v-if="row.package_add_ons?.length">
+                            <hr class="my-1 border-stone-200" />
+                            <p class="text-xs text-stone-400 mb-0.5">
+                                Add-ons:
+                            </p>
+                            <p
+                                v-for="(addon, index) in row.package_add_ons"
+                                :key="index"
+                                class="text-sm text-stone-500"
+                            >
+                                • {{ addon.title }} ({{
+                                    formatAmount(addon.price)
+                                }})
+                            </p>
+                        </template>
+                        <hr class="my-1 border-stone-200" />
+                        <p class="text-sm font-semibold text-stone-700">
+                            Total: {{ formatAmount(row.total_payment) }}
+                        </p>
+                    </template>
+
+                    <!-- Contact -->
+                    <template #contact="{ row }">
+                        <p class="text-sm font-medium text-stone-700">
+                            Client: {{ row.user?.user_info.first_name }}
+                            {{ row.user?.user_info.last_name }}
+                        </p>
+                        <p class="text-sm text-stone-500">
+                            Client Email: {{ row.user?.email }}
+                        </p>
+                        <p class="text-sm text-stone-500">
+                            Client Phone:
+                            {{ formatPhone(row.user?.user_info.phone) }}
+                        </p>
+                        <hr class="my-1 border-stone-200" />
+                        <p class="text-sm font-medium text-stone-700">
+                            Guest: {{ row.guest_first_name }}
+                            {{ row.guest_last_name }}
+                        </p>
+                        <p class="text-sm text-stone-500">
+                            Guest Email: {{ row.guest_email }}
+                        </p>
+                        <p class="text-sm text-stone-500">
+                            Guest Phone: {{ formatPhone(row.guest_phone) }}
+                        </p>
+                    </template>
+
+                    <!-- Payment -->
+                    <template #payment="{ row }">
+                        <p class="text-sm font-medium text-stone-700">
+                            {{ row.payment_option?.payment ?? "Walk-in" }}
+                        </p>
+                        <template v-if="row.payment_option">
+                            <p class="text-sm text-stone-500">
+                                {{ row.payment_option.account }}
+                            </p>
+                            <p class="text-sm text-stone-500">
+                                {{ formatPhone(row.payment_option.number) }}
+                            </p>
+                        </template>
+                        <template v-if="row.payment_transaction_ref">
+                            <hr class="my-1 border-stone-200" />
+                            <p class="text-xs text-stone-400">Ref #</p>
+                            <p class="text-sm text-stone-500">
+                                {{ row.payment_transaction_ref }}
+                            </p>
+                            <p class="text-sm text-stone-500">
+                                {{ formatPhone(row.payment_account_number) }}
+                            </p>
+                        </template>
+                    </template>
+
+                    <!-- Date -->
+                    <template #date="{ row }">
+                        <p class="text-sm text-stone-600">
+                            {{ row.date ? formatDate(row.date) : "—" }}
+                        </p>
+                    </template>
+
+                    <!-- Status -->
                     <template #status="{ value }">
                         <span
                             class="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize"
@@ -197,10 +255,12 @@ const submit = () => {
                             {{ statusConfig[value]?.label ?? value }}
                         </span>
                     </template>
+
+                    <!-- Actions -->
                     <template #actions="{ row }">
                         <div class="flex flex-col gap-1">
                             <Link
-                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
+                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-3 py-2 rounded-md transition-colors text-center text-sm"
                                 :href="route('admin.messages')"
                             >
                                 <font-awesome-icon
@@ -208,23 +268,33 @@ const submit = () => {
                                 />
                                 Message
                             </Link>
+
                             <button
-                                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
-                                @click="editStatusModalOpen(row)"
+                                v-if="row.status === 'pending'"
+                                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-2 rounded-md transition-colors text-sm"
+                                @click="openStatusModal(row, 'confirm')"
                             >
                                 <font-awesome-icon icon="fa-solid fa-check" />
                                 Confirm
                             </button>
+
                             <button
-                                class="bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
-                                @click="editStatusModalOpen(row)"
+                                v-if="
+                                    ['pending', 'confirmed'].includes(
+                                        row.status,
+                                    )
+                                "
+                                class="bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-2 rounded-md transition-colors text-sm"
+                                @click="openStatusModal(row, 'cancel')"
                             >
                                 <font-awesome-icon icon="fa-solid fa-xmark" />
                                 Cancel
                             </button>
+
                             <button
-                                class="bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-2 rounded-md transition-colors"
-                                @click="editStatusModalOpen(row)"
+                                v-if="row.status === 'confirmed'"
+                                class="bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-2 rounded-md transition-colors text-sm"
+                                @click="openStatusModal(row, 'complete')"
                             >
                                 <font-awesome-icon
                                     icon="fa-solid fa-check-double"
@@ -239,7 +309,7 @@ const submit = () => {
             <!-- Status Modal -->
             <Modal
                 :show="modal.type.value === 'Status'"
-                @close="modalClose"
+                @close="!form.processing && modalClose()"
                 :maxWidth="'sm'"
             >
                 <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -250,23 +320,35 @@ const submit = () => {
 
                     <div class="mt-6">
                         <p class="text-gray-600">
-                            Are you sure you want to update the status of this
-                            booking?
+                            {{
+                                currentAction
+                                    ? actionConfig[currentAction].description
+                                    : "Are you sure?"
+                            }}
                         </p>
                     </div>
 
                     <div class="mt-6 flex justify-between">
                         <SecondaryButton
-                            class="flex items-center"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="modalClose"
+                            :disabled="form.processing"
                         >
                             Cancel
                         </SecondaryButton>
 
                         <DangerButton
                             class="flex items-center gap-1"
+                            :class="{ 'opacity-25': form.processing }"
                             @click="submit"
+                            :disabled="form.processing"
                         >
+                            <div class="text-sm" v-if="form.processing">
+                                <font-awesome-icon
+                                    icon="fa-solid fa-spinner"
+                                    spin
+                                />
+                            </div>
                             Confirm
                             <font-awesome-icon icon="fa-solid fa-thumbs-up" />
                         </DangerButton>
