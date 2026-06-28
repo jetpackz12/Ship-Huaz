@@ -129,12 +129,15 @@ const submitCredentials = () => {
                                 <InputLabel for="phone" value="Phone" />
                                 <TextInput
                                     id="phone"
-                                    type="number"
+                                    type="tel"
                                     class="mt-1 block w-full"
                                     v-model="user_information.phone"
                                     required
                                     autocomplete="phone"
                                     placeholder="e.g. 9123456789"
+                                    pattern="^9\d{9}$"
+                                    maxlength="10"
+                                />
                                 />
                                 <InputError
                                     class="mt-2"

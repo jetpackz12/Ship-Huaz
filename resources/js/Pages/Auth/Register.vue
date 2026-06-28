@@ -104,6 +104,8 @@ const submit = () => {
                     required
                     autocomplete="phone"
                     placeholder="e.g. 9123456789"
+                    pattern="^9\d{9}$"
+                    maxlength="10"
                 />
 
                 <InputError class="mt-2" :message="form.errors.phone" />
