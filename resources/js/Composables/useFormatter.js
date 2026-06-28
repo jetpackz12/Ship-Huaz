@@ -16,5 +16,10 @@ export function useFormatter() {
         }).format(amount);
     };
 
-    return { formatDate, formatAmount };
+    const formatPhone = (phone) => {
+        phone = phone.toString().trim();
+        return phone.length === 10 ? `0${phone}` : phone;
+    };
+
+    return { formatDate, formatAmount, formatPhone };
 }
