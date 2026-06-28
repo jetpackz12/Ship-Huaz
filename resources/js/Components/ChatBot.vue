@@ -21,8 +21,6 @@ onMounted(async () => {
         mainNodeId.value = data.main_node_id;
         loading.value = false;
 
-        console.log(data);
-
         // Seed the welcome message from the main node
         const main = nodes.value[mainNodeId.value];
         if (main) {
