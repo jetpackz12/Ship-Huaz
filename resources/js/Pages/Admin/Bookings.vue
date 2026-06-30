@@ -112,7 +112,7 @@ const submit = () => {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
-            const booking = localBookings.value.find(b => b.id === form.id);
+            const booking = localBookings.value.find((b) => b.id === form.id);
             if (booking) booking.status = form.status;
             modalClose();
         },
@@ -274,16 +274,6 @@ const submit = () => {
                     <!-- Actions -->
                     <template #actions="{ row }">
                         <div class="flex flex-col gap-1">
-                            <Link
-                                class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-3 py-2 rounded-md transition-colors text-center text-sm"
-                                :href="route('admin.messages')"
-                            >
-                                <font-awesome-icon
-                                    icon="fa-solid fa-envelope"
-                                />
-                                Message
-                            </Link>
-
                             <button
                                 v-if="row.status === 'pending'"
                                 class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-3 py-2 rounded-md transition-colors text-sm"
