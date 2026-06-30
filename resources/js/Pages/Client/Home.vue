@@ -196,7 +196,7 @@ const confirmedCount = computed(
 
                     
                     <Link
-                        :href="route('client.notifications')"
+                        :href="route('client.notifications.index')"
                         method="get"
                         as="button"
                         class="flex shrink-0 flex-col items-center rounded-md w-full sm:w-auto bg-amber-400 py-2 sm:px-6 sm:py-3 text-center shadow-lg shadow-amber-400/40"

@@ -33,7 +33,14 @@ Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('clien
         Route::post('/check-availability', [BookingController::class, 'checkAvailability'])->name('check-availability');
     });
 
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('/notifications/{thread}/reply', [NotificationController::class, 'reply'])->name('reply');
+        Route::patch('/notifications/{thread}/read', [NotificationController::class, 'markRead'])->name('markRead');
+        Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('markAllRead');
+        Route::delete('/notifications/{thread}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('/notifications', [NotificationController::class, 'destroyAll'])->name('destroyAll');
+    });
 
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
@@ -77,10 +84,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/', [PaymentOptionController::class, 'index'])->name('index');
         Route::put('/update/{paymentOption}', [PaymentOptionController::class, 'update'])->name('update');
     });
-
-    // Route::get('/messages', function () {
-    //     return Inertia::render('Admin/Messages');
-    // })->name('messages');
 
     Route::prefix('/messages')->name('messages.')->group(function () {
         Route::get('/', [MessageThreadController::class, 'index'])->name('index');

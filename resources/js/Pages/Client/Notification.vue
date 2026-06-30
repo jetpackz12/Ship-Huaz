@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { Head, router } from "@inertiajs/vue3";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const props = defineProps({
     notifications: {
@@ -19,83 +19,7 @@ const replyText = ref("");
 const replyingTo = ref(null);
 const expandedThread = ref(null);
 
-const mockNotifications = ref([
-    {
-        id: 1,
-        type: "booking_reminder",
-        read: false,
-        timestamp: "2025-06-16T08:00:00",
-        booking_ref: "BSH-2025-0042",
-        title: "Booking Reminder",
-        body: "Please be informed that you have a booking tomorrow, June 17 at 2:00 PM – Captain's Experience Package for 4 guests.",
-        sender: "system",
-        thread: [],
-    },
-    {
-        id: 2,
-        type: "message",
-        read: false,
-        timestamp: "2025-06-15T14:30:00",
-        booking_ref: "BSH-2025-0042",
-        title: "Action Required: Confirm Your Booking",
-        body: "Good day! Please confirm your booking scheduled for tomorrow, June 17, 2025 at 2:00 PM. Reply CONFIRM to secure your slot, or CANCEL if plans have changed. We look forward to welcoming you aboard!",
-        sender: "admin",
-        sender_name: "Captain Rodel – Butal Ship Hauz",
-        thread: [
-            {
-                id: "2-1",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "We've reserved the upper deck for your group. Free coffee and juice will be ready upon arrival.",
-                timestamp: "2025-06-15T14:45:00",
-            },
-        ],
-        canReply: true,
-    },
-    {
-        id: 3,
-        type: "booking_confirmed",
-        read: true,
-        timestamp: "2025-06-10T09:15:00",
-        booking_ref: "BSH-2025-0038",
-        title: "Booking Confirmed",
-        body: "Your booking for the Overnight Stay Package on June 10, 2025 has been confirmed. Booking Reference: BSH-2025-0038.",
-        sender: "system",
-        thread: [],
-    },
-    {
-        id: 4,
-        type: "message",
-        read: true,
-        timestamp: "2025-06-08T11:00:00",
-        booking_ref: "BSH-2025-0038",
-        title: "Welcome Aboard!",
-        body: "Thank you for choosing The Butal Ship Hauz! Your overnight stay has been arranged. Check-in starts at 3:00 PM, and complimentary refreshments are served at the upper deck.",
-        sender: "admin",
-        sender_name: "The Butal Ship Hauz Team",
-        thread: [
-            {
-                id: "4-1",
-                from: "client",
-                name: "You",
-                body: "Thank you! Can we request an early check-in?",
-                timestamp: "2025-06-08T12:30:00",
-            },
-            {
-                id: "4-2",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "Sure! We can accommodate early check-in by 1:00 PM at no extra charge. See you soon!",
-                timestamp: "2025-06-08T13:10:00",
-            },
-        ],
-        canReply: true,
-    },
-]);
-
-const notifications = computed(() =>
-    props.notifications.length ? props.notifications : mockNotifications.value,
-);
+const notifications = computed(() => props.notifications);
 
 const filtered = computed(() => {
     if (activeTab.value === "booking")
@@ -151,13 +75,18 @@ function badgeClass(type) {
 }
 
 function markRead(notif) {
+    if (notif.read) {
+        expandedThread.value =
+            expandedThread.value === notif.id ? null : notif.id;
+        return;
+    }
     notif.read = true;
     expandedThread.value = expandedThread.value === notif.id ? null : notif.id;
+    axios.patch(route("client.notifications.markRead", notif.id));
 }
 
 function toggleThread(notif) {
-    notif.read = true;
-    expandedThread.value = expandedThread.value === notif.id ? null : notif.id;
+    markRead(notif);
 }
 
 function openReply(notif) {
@@ -167,29 +96,45 @@ function openReply(notif) {
 
 function sendReply(notif) {
     if (!replyText.value.trim()) return;
-    notif.thread.push({
-        id: `${notif.id}-${Date.now()}`,
-        from: "client",
-        name: "You",
-        body: replyText.value.trim(),
-        timestamp: new Date().toISOString(),
-    });
-    replyText.value = "";
-    replyingTo.value = null;
-    // TODO: axios.post(route('notifications.reply', notif.id), { body })
+
+    router.post(
+        route("client.notifications.reply", notif.id),
+        {
+            body: replyText.value.trim(),
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                replyText.value = "";
+                replyingTo.value = null;
+            },
+        },
+    );
 }
 
 function markAllRead() {
-    notifications.value.forEach((n) => (n.read = true));
+    router.patch(
+        route("client.notifications.markAllRead"),
+        {},
+        { preserveScroll: true },
+    );
 }
 
-function deleteAll() {
-    if (!confirm("Delete all notifications? This cannot be undone.")) return;
-    mockNotifications.value = [];
-    expandedThread.value = null;
-    replyingTo.value = null;
-    // TODO: axios.delete(route('notifications.destroyAll'))
-}
+let pollTimer = null;
+
+onMounted(() => {
+    pollTimer = setInterval(() => {
+        router.reload({
+            only: ["notifications"],
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }, 5000);
+});
+
+onUnmounted(() => {
+    if (pollTimer) clearInterval(pollTimer);
+});
 </script>
 
 <template>
@@ -201,7 +146,9 @@ function deleteAll() {
             <div class="sticky top-0 z-20 bg-white rounded-xl shadow-lg">
                 <div class="mx-auto px-4 pt-5 pb-0">
                     <!-- Title row -->
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0 pb-4">
+                    <div
+                        class="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0 pb-4"
+                    >
                         <div class="flex items-center gap-3">
                             <svg
                                 class="w-10 h-10 fill-brass flex-shrink-0"
@@ -235,14 +182,6 @@ function deleteAll() {
                                     icon="fa-solid fa-check-double"
                                 />
                                 Mark all read
-                            </button>
-                            <button
-                                v-if="notifications.length > 0"
-                                class="rounded-full border border-red-400 px-4 py-1.5 text-sm text-red-400 transition hover:bg-red-500 hover:text-white"
-                                @click="deleteAll"
-                            >
-                                <font-awesome-icon icon="fa-solid fa-trash" />
-                                Delete all
                             </button>
                         </div>
                     </div>
@@ -434,7 +373,10 @@ function deleteAll() {
                                     class="rounded-full border border-blue-900 px-4 py-1.5 text-xs font-medium text-blue-900 transition hover:bg-blue-900 hover:text-white"
                                     @click.stop="openReply(notif)"
                                 >
-                                    ↩ Reply
+                                    <font-awesome-icon
+                                        icon="fa-solid fa-reply"
+                                    />
+                                    Reply
                                 </button>
                             </div>
 
@@ -463,7 +405,10 @@ function deleteAll() {
                                             :disabled="!replyText.trim()"
                                             @click.stop="sendReply(notif)"
                                         >
-                                            Send ↗
+                                            Send
+                                            <font-awesome-icon
+                                                icon="fa-solid fa-paper-plane"
+                                            />
                                         </button>
                                     </div>
                                 </div>
