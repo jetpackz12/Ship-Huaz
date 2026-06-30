@@ -27,7 +27,7 @@ const activeThread = computed(
 
 // Compose form
 const composeForm = ref({
-    client: null, // booking_id selected from dropdown — matches controller's "client" => booking id
+    client: null,
     type: "message",
     subject: "",
     body: "",

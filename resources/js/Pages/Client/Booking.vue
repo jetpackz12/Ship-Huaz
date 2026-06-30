@@ -38,10 +38,7 @@ const tableColumns = [
 // ─── Table: Default Data ───────────────────────────────────────────────────
 const tableData = computed(() =>
     localBookings.value.map((b) => {
-        // already-mapped rows (from unshift) pass through as-is
         if (b.ref !== undefined) return b;
-
-        // raw bookings from server props get mapped
         return {
             ref: b.booking_ref,
             event: b.event_type?.type ?? "—",
@@ -152,8 +149,6 @@ watch([eventDate, timeSlot], () => {
 });
 
 // ── Mapped from props.eventTypes ──────────────────────────────────────────
-// Each item has: { id, type, status }
-// We only show active ones; fall back to empty array if prop not yet loaded.
 const activeEventTypes = computed(() =>
     (props.eventTypes ?? []).filter((e) => e.status === "active"),
 );
@@ -164,9 +159,6 @@ const step1Valid = computed(
 
 // ─── Step 2: Venue Packages & Add-ons ─────────────────────────────────────
 // ── Mapped from props.venuePackages ──────────────────────────────────────
-// Schema: { id, title, description, guests, price, status }
-// We normalise to what the template already expects:
-//   name, desc, price, capacity  (plus id for v-model)
 const packages = computed(() =>
     (props.venuePackages ?? [])
         .filter((p) => p.status === "active")
@@ -180,8 +172,6 @@ const packages = computed(() =>
 );
 
 // ── Mapped from props.packageAddOns ──────────────────────────────────────
-// Schema: { id, title, description, price, status }
-// "Guest Entry Passes" is the only per-head add-on — detect it by title.
 const addons = computed(() =>
     (props.packageAddOns ?? [])
         .filter((a) => a.status === "active")
@@ -238,8 +228,6 @@ const step3Valid = computed(
 
 // ─── Step 5: Payment ───────────────────────────────────────────────────────
 // ── Mapped from props.paymentOptions ─────────────────────────────────────
-// Schema: { id, payment, number, account, description, status }
-// We keep a "Pay at Venue" fallback so the form always has at least one option.
 const activePaymentOptions = computed(() => {
     const fromDB = (props.paymentOptions ?? [])
         .filter((o) => o.status === "active")

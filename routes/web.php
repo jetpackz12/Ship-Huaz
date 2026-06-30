@@ -55,10 +55,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/update/{booking}', [BookingController::class, 'update'])->name('update');
     });
 
-    // Route::get('/time-slots', function () {
-    //     return Inertia::render('Admin/TimeSlots');
-    // })->name('time-slots');
-
     Route::prefix('event-types')->name('event-types.')->group(function () {
         Route::get('/', [EventTypeController::class, 'index'])->name('index');
         Route::post('/store', [EventTypeController::class, 'store'])->name('store');
@@ -120,10 +116,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::middleware('auth')->group(function () {
     Route::put('/update-information', [ProfileController::class, 'updateInformation'])->name('update-information');
     Route::put('/update-credentials', [ProfileController::class, 'updateCredentials'])->name('update-credentials');
-
-    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 
