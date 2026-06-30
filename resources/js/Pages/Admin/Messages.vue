@@ -4,7 +4,7 @@ import Modal from "@/Components/Modal.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import { Head, router } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useModal } from "@/Composables/useModal";
 
 const props = defineProps({
@@ -89,14 +89,7 @@ function openThread(thread) {
 
     if (!thread.read) {
         thread.read = true;
-        router.patch(
-            route("admin.messages.markRead", thread.id),
-            {},
-            {
-                preserveScroll: true,
-                preserveState: true,
-            },
-        );
+        axios.patch(route("admin.messages.markRead", thread.id));
     }
 }
 
@@ -130,7 +123,7 @@ const isDeleting = ref(false);
 
 function deleteThread() {
     isDeleting.value = true;
-     router.delete(route("admin.messages.destroy", activeThreadId.value), {
+    router.delete(route("admin.messages.destroy", activeThreadId.value), {
         onSuccess: () => {
             activeThreadId.value = null;
             modal.closeModal();
@@ -169,6 +162,23 @@ function submitCompose() {
         },
     });
 }
+
+// ── Live updates via polling ──────────────────────────────────────────
+let pollTimer = null;
+
+onMounted(() => {
+    pollTimer = setInterval(() => {
+        router.reload({
+            only: ["threads"],
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }, 5000);
+});
+
+onUnmounted(() => {
+    if (pollTimer) clearInterval(pollTimer);
+});
 </script>
 
 <template>
@@ -483,7 +493,9 @@ function submitCompose() {
                                     class="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 transition"
                                     @click="deleteModalOpen(activeThread)"
                                 >
-                                    <font-awesome-icon icon="fa-solid fa-trash" />
+                                    <font-awesome-icon
+                                        icon="fa-solid fa-trash"
+                                    />
                                     Delete
                                 </button>
                             </div>
@@ -574,7 +586,7 @@ function submitCompose() {
                     </template>
                 </main>
             </div>
-            
+
             <Modal
                 :show="modal.type.value === 'Delete'"
                 @close="modal.closeModal()"

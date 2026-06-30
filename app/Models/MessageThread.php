@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['booking_id', 'user_id', 'user_name', 'ref', 'type', 'subject', 'read', 'can_reply'])]
+#[Fillable(['booking_id', 'user_id', 'user_name', 'ref', 'type', 'subject', 'read_by_client', 'read_by_admin', 'can_reply'])]
 class MessageThread extends Model
 {
     protected $casts = [
-        'read' => 'boolean',
+        'read_by_client' => 'boolean',
+        'read_by_admin' => 'boolean',
         'can_reply' => 'boolean',
     ];
 

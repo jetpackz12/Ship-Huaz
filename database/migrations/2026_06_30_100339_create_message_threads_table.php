@@ -17,7 +17,8 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->enum('type', ['message', 'booking_reminder', 'booking_confirmed'])->default('message');
             $table->string('subject');
-            $table->boolean('read')->default(false);
+            $table->boolean('read_by_client')->default(false);
+            $table->boolean('read_by_admin')->default(false);
             $table->boolean('can_reply')->default(true);
             $table->timestamps();
         });

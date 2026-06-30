@@ -22,7 +22,7 @@ class MessageThreadController extends Controller
                 ->map(fn($t) => [
                     'id' => $t->id,
                     'type' => $t->type,
-                    'read' => $t->read,
+                    'read' => $t->read_by_admin,
                     'client' => $this->clientLabel($t),
                     'ref' => $t->booking?->booking_ref,
                     'subject' => $t->subject,
@@ -59,8 +59,9 @@ class MessageThreadController extends Controller
             'user_id' => $booking->user_id,
             'type' => $data['type'],
             'subject' => $data['subject'],
-            'read' => true,
             'can_reply' => true,
+            'read_by_admin' => true,
+            'read_by_client' => false,
         ]);
 
         $thread->messages()->create([
@@ -79,6 +80,11 @@ class MessageThreadController extends Controller
             'sender' => 'required|string',
         ]);
 
+        $thread->update([
+            'read_by_admin' => true,
+            'read_by_client' => false,
+        ]);
+
         $thread->messages()->create([
             'from' => 'admin',
             'name' => $data['sender'],
@@ -92,9 +98,9 @@ class MessageThreadController extends Controller
 
     public function markRead(MessageThread $thread)
     {
-        $thread->update(['read' => true]);
+        $thread->update(['read_by_admin' => true]);
 
-        return redirect()->back();
+        return response()->noContent();
     }
 
     public function destroy(MessageThread $thread)
