@@ -28,4 +28,9 @@ class MessageThread extends Model
     {
         return $this->belongsTo(Booking::class);
     }
+
+    public function latestMessage()
+    {
+        return $this->hasOne(Message::class)->latestOfMany();
+    }
 }

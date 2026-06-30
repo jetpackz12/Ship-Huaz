@@ -8,5 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 #[Unguarded]
 class VenuePackage extends Model
 {
-    //
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
 }
