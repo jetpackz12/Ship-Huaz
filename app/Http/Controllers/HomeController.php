@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
+use App\Models\MessageThread;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -12,54 +15,52 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return Inertia::render('Client/Home');
+        $user = Auth::user();
+
+        $bookings = Booking::with(['venuePackage', 'eventType'])
+            ->where('user_id', $user->id)
+            ->orderByDesc('date')
+            ->take(10)
+            ->get()
+            ->map(fn (Booking $booking) => [
+                'id' => $booking->id,
+                'package' => $booking->venuePackage->title ?? null,
+                'event_type' => $booking->eventType->title ?? $booking->eventType->name ?? null,
+                'status' => $booking->status,
+                'date' => $booking->date->toDateString(),
+                'guests' => $booking->guest_count,
+                'total_amount' => (float) $booking->total_payment,
+            ]);
+
+        $notifications = MessageThread::with('latestMessage')
+            ->where('user_id', $user->id)
+            ->whereIn('type', ['booking_reminder', 'booking_confirmed'])
+            ->orderByDesc('updated_at')
+            ->take(10)
+            ->get()
+            ->map(fn (MessageThread $thread) => [
+                'id' => $thread->id,
+                'read_at' => $thread->read_by_client ? $thread->updated_at?->toIso8601String() : null,
+                'title' => $this->notificationTitle($thread),
+                'message' => optional($thread->latestMessage)->body ?? $thread->subject,
+                'created_at' => $thread->created_at->toIso8601String(),
+            ]);
+
+        return Inertia::render('Client/Home', [
+            'bookings' => $bookings,
+            'notifications' => $notifications,
+        ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Map a message thread's type to the notification heading shown to the client.
      */
-    public function create()
+    private function notificationTitle(MessageThread $thread): string
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return match ($thread->type) {
+            'booking_confirmed' => 'Booking Confirmed!',
+            'booking_reminder' => 'Upcoming Reservation Reminder',
+            default => $thread->subject,
+        };
     }
 }
