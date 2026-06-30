@@ -1,7 +1,11 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import ChatBot from "@/Components/ChatBot.vue";
+
+const unreadMessagesCount = computed(
+    () => page.props.unreadClientMessagesCount ?? 0,
+);
 
 const isShowSideBar = ref(true);
 const page = usePage();
@@ -15,7 +19,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Notifications",
-        route: route("client.notifications"),
+        route: route("client.notifications.index"),
         icon: "fa-solid fa-bell",
         hasBadge: true,
     },
@@ -102,7 +106,10 @@ const isActive = (href) => page.url.startsWith(new URL(href).pathname);
                         <div class="relative">
                             <font-awesome-icon :icon="menu.icon" />
                             <span
-                                v-if="menu.hasBadge"
+                                v-if="
+                                    menu.menuName === 'Notifications' &&
+                                    unreadMessagesCount > 0
+                                "
                                 class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                             />
                         </div>

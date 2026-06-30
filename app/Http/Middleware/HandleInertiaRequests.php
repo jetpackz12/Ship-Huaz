@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\MessageThread;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,6 +39,14 @@ class HandleInertiaRequests extends Middleware
                 'booking_ref' => $request->session()->get('booking_ref'),
                 'success'     => $request->session()->get('success'),
             ],
+            'unreadAdminMessagesCount' => fn() => $request->user()
+                ? MessageThread::where('read_by_admin', false)->count()
+                : 0,
+            'unreadClientMessagesCount' => fn() => $request->user()
+                ? MessageThread::where('user_id', $request->user()->id)
+                ->where('read_by_client', false)
+                ->count()
+                : 0,
         ];
     }
 }

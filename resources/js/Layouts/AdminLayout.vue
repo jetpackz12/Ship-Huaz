@@ -1,7 +1,11 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import ChatBot from "@/Components/ChatBot.vue";
+
+const unreadMessagesCount = computed(
+    () => page.props.unreadAdminMessagesCount ?? 0,
+);
 
 const isShowSideBar = ref(true);
 const page = usePage();
@@ -17,7 +21,10 @@ const sidebarMenus = [
         icon: "fa-solid fa-book-bookmark",
         children: [
             { menuName: "Bookings", route: route("admin.bookings.index") },
-            { menuName: "Event Types", route: route("admin.event-types.index") },
+            {
+                menuName: "Event Types",
+                route: route("admin.event-types.index"),
+            },
             {
                 menuName: "Venue Packages",
                 route: route("admin.venue-packages.index"),
@@ -26,7 +33,10 @@ const sidebarMenus = [
                 menuName: "Package Add Ons",
                 route: route("admin.package-add-ons.index"),
             },
-            { menuName: "GCash & Maya", route: route("admin.payment-options.index") },
+            {
+                menuName: "GCash & Maya",
+                route: route("admin.payment-options.index"),
+            },
         ],
     },
     {
@@ -197,7 +207,10 @@ const toggleSubmenu = (menuName) => {
                             <div class="relative">
                                 <font-awesome-icon :icon="menu.icon" />
                                 <span
-                                    v-if="menu.hasBadge"
+                                    v-if="
+                                        menu.menuName === 'Messages' &&
+                                        unreadMessagesCount > 0
+                                    "
                                     class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                                 />
                             </div>
