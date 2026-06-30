@@ -31,7 +31,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Messages",
-        route: route("admin.messages"),
+        route: route("admin.messages.index"),
         icon: "fa-solid fa-envelope",
         hasBadge: true,
     },

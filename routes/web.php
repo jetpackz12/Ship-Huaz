@@ -7,6 +7,7 @@ use App\Http\Controllers\ChatBotNodeController;
 use App\Http\Controllers\ChatBotNodeOptionController;
 use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PackageAddOnController;
 use App\Http\Controllers\PaymentOptionController;
@@ -77,9 +78,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/update/{paymentOption}', [PaymentOptionController::class, 'update'])->name('update');
     });
 
-    Route::get('/messages', function () {
-        return Inertia::render('Admin/Messages');
-    })->name('messages');
+    // Route::get('/messages', function () {
+    //     return Inertia::render('Admin/Messages');
+    // })->name('messages');
+
+    Route::prefix('/messages')->name('messages.')->group(function () {
+        Route::get('/', [MessageThreadController::class, 'index'])->name('index');
+        Route::post('/store', [MessageThreadController::class, 'store'])->name('store');
+        Route::post('/{thread}/reply', [MessageThreadController::class, 'reply'])->name('reply');
+        Route::patch('/{thread}/read', [MessageThreadController::class, 'markRead'])->name('markRead');
+        Route::delete('/{thread}', [MessageThreadController::class, 'destroy'])->name('destroy');
+    });
 
     Route::prefix('clients')->name('clients.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
