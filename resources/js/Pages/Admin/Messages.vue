@@ -21,9 +21,16 @@ const replyText = ref("");
 const senderName = ref("Captain Rodel – Butal Ship Hauz");
 const threadBody = ref(null);
 
+// ── Computed ─────────────────────────────────────────────────────────────────
+const threads = computed(() => props.threads);
+
 const activeThread = computed(
     () => threads.value.find((t) => t.id === activeThreadId.value) ?? null,
 );
+
+// On small screens we only ever show ONE pane at a time: the thread list, or
+// the thread/compose detail. This flag drives which pane is visible on mobile.
+const showDetailOnMobile = computed(() => isCompose.value || !!activeThread.value);
 
 // Compose form
 const composeForm = ref({
@@ -43,9 +50,6 @@ const deleteModalOpen = (thread) => {
     modal.icon.value = "fa-solid fa-trash";
     modal.openModal();
 };
-
-// ── Computed ─────────────────────────────────────────────────────────────────
-const threads = computed(() => props.threads);
 
 const unreadCount = computed(() => threads.value.filter((t) => !t.read).length);
 
@@ -136,7 +140,7 @@ function deleteThread() {
 
 function showCompose() {
     isCompose.value = true;
-    activeThread.value = null;
+    activeThreadId.value = null;
     composeForm.value = {
         client: null,
         type: "message",
@@ -163,6 +167,12 @@ function submitCompose() {
     });
 }
 
+// Return to the thread list (mobile only — desktop always shows both panes)
+function backToList() {
+    activeThreadId.value = null;
+    isCompose.value = false;
+}
+
 // ── Live updates via polling ──────────────────────────────────────────
 let pollTimer = null;
 
@@ -187,11 +197,12 @@ onUnmounted(() => {
     <AdminLayout>
         <div>
             <div
-                class="flex h-[640px] rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+                class="flex h-[calc(100dvh-11rem)] min-h-[420px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:h-[640px]"
             >
                 <!-- ── Sidebar ─────────────────────────────────────────── -->
                 <aside
-                    class="w-72 flex-shrink-0 border-r border-gray-200 flex flex-col"
+                    class="w-full flex-shrink-0 flex-col border-gray-200 md:flex md:w-72 md:border-r"
+                    :class="showDetailOnMobile ? 'hidden md:flex' : 'flex'"
                 >
                     <!-- Header -->
                     <div class="p-4 border-b border-gray-100">
@@ -319,11 +330,14 @@ onUnmounted(() => {
                 </aside>
 
                 <!-- ── Main panel ──────────────────────────────────────── -->
-                <main class="flex flex-1 flex-col overflow-hidden">
+                <main
+                    class="w-full flex-1 flex-col overflow-hidden md:flex md:border-l-0"
+                    :class="showDetailOnMobile ? 'flex' : 'hidden md:flex'"
+                >
                     <!-- Empty state -->
                     <div
                         v-if="!activeThread && !isCompose"
-                        class="flex flex-1 flex-col items-center justify-center text-gray-400 gap-3"
+                        class="hidden flex-1 flex-col items-center justify-center gap-3 text-gray-400 md:flex"
                     >
                         <span class="text-5xl">💬</span>
                         <p class="font-medium text-gray-500">
@@ -335,13 +349,34 @@ onUnmounted(() => {
                     <!-- Compose panel -->
                     <div
                         v-else-if="isCompose"
-                        class="flex flex-1 flex-col overflow-y-auto p-6 gap-4"
+                        class="flex flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6"
                     >
-                        <h3 class="text-base font-semibold text-slate-900">
-                            New message
-                        </h3>
+                        <div class="flex items-center gap-2">
+                            <button
+                                class="-ml-1 flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 md:hidden"
+                                @click="backToList"
+                                aria-label="Back to messages"
+                            >
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+                                    />
+                                </svg>
+                            </button>
+                            <h3 class="text-base font-semibold text-slate-900">
+                                New message
+                            </h3>
+                        </div>
 
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="mb-1 block text-xs text-gray-500"
                                     >To (client)</label
@@ -427,13 +462,13 @@ onUnmounted(() => {
                             </select>
                         </div>
 
-                        <div class="flex gap-2">
+                        <div class="flex flex-col gap-2 sm:flex-row">
                             <button
                                 :disabled="
                                     !composeForm.body.trim() ||
                                     !composeForm.client
                                 "
-                                class="flex items-center gap-2 rounded-lg bg-blue-900 px-5 py-2 text-sm font-medium text-white hover:bg-blue-950 transition disabled:cursor-not-allowed disabled:opacity-40"
+                                class="flex items-center justify-center gap-2 rounded-lg bg-blue-900 px-5 py-2 text-sm font-medium text-white hover:bg-blue-950 transition disabled:cursor-not-allowed disabled:opacity-40"
                                 @click="submitCompose"
                             >
                                 Send message
@@ -464,31 +499,52 @@ onUnmounted(() => {
                     <template v-else-if="activeThread">
                         <!-- Thread header -->
                         <div
-                            class="flex items-start justify-between border-b border-gray-100 px-6 py-4"
+                            class="flex items-start justify-between gap-2 border-b border-gray-100 px-4 py-4 md:px-6"
                         >
-                            <div>
-                                <h3
-                                    class="text-sm font-semibold text-slate-900"
+                            <div class="flex min-w-0 items-start gap-2">
+                                <button
+                                    class="-ml-1 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 md:hidden"
+                                    @click="backToList"
+                                    aria-label="Back to messages"
                                 >
-                                    {{ activeThread.subject }}
-                                </h3>
-                                <div
-                                    class="mt-1 flex items-center gap-2 text-xs text-gray-500"
-                                >
-                                    <span>{{ activeThread.client }}</span>
-                                    <span
-                                        class="font-mono bg-gray-100 rounded px-1"
-                                        >{{ activeThread.ref }}</span
+                                    <svg
+                                        class="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        viewBox="0 0 24 24"
                                     >
-                                    <span
-                                        class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                                        :class="pillClass(activeThread.type)"
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+                                        />
+                                    </svg>
+                                </button>
+                                <div class="min-w-0">
+                                    <h3
+                                        class="truncate text-sm font-semibold text-slate-900"
                                     >
-                                        {{ pillLabel(activeThread.type) }}
-                                    </span>
+                                        {{ activeThread.subject }}
+                                    </h3>
+                                    <div
+                                        class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500"
+                                    >
+                                        <span>{{ activeThread.client }}</span>
+                                        <span
+                                            class="font-mono bg-gray-100 rounded px-1"
+                                            >{{ activeThread.ref }}</span
+                                        >
+                                        <span
+                                            class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                            :class="pillClass(activeThread.type)"
+                                        >
+                                            {{ pillLabel(activeThread.type) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex flex-shrink-0 gap-2">
                                 <button
                                     class="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 transition"
                                     @click="deleteModalOpen(activeThread)"
@@ -496,7 +552,7 @@ onUnmounted(() => {
                                     <font-awesome-icon
                                         icon="fa-solid fa-trash"
                                     />
-                                    Delete
+                                    <span class="hidden sm:inline">Delete</span>
                                 </button>
                             </div>
                         </div>
@@ -504,7 +560,7 @@ onUnmounted(() => {
                         <!-- Messages -->
                         <div
                             ref="threadBody"
-                            class="flex-1 overflow-y-auto px-6 py-4 space-y-3"
+                            class="flex-1 overflow-y-auto px-4 py-4 space-y-3 md:px-6"
                         >
                             <div
                                 v-for="msg in activeThread.messages"
@@ -517,7 +573,7 @@ onUnmounted(() => {
                                 "
                             >
                                 <div
-                                    class="max-w-[72%] rounded-xl px-4 py-2.5 text-sm leading-relaxed"
+                                    class="max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed sm:max-w-[72%]"
                                     :class="
                                         msg.from === 'client'
                                             ? 'rounded-br-sm bg-blue-900 text-white'
@@ -542,7 +598,7 @@ onUnmounted(() => {
                         <!-- Reply box -->
                         <div
                             v-if="activeThread.canReply"
-                            class="border-t border-gray-100 px-6 py-4"
+                            class="border-t border-gray-100 px-4 py-4 md:px-6"
                         >
                             <div class="mb-2 flex items-center gap-2">
                                 <span class="text-xs text-gray-500"
@@ -566,14 +622,14 @@ onUnmounted(() => {
                                 @keydown.ctrl.enter="sendReply(activeThread)"
                             />
                             <div
-                                class="mt-2 flex items-center justify-between px-5"
+                                class="mt-2 flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-5"
                             >
                                 <span class="text-[11px] text-gray-400"
                                     >Ctrl + Enter to send</span
                                 >
                                 <button
                                     :disabled="!replyText.trim()"
-                                    class="flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-950 transition disabled:cursor-not-allowed disabled:opacity-40"
+                                    class="flex items-center justify-center gap-2 rounded-lg bg-blue-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-950 transition disabled:cursor-not-allowed disabled:opacity-40"
                                     @click="sendReply(activeThread)"
                                 >
                                     Send
