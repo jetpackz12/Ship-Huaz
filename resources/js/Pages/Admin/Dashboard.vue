@@ -25,6 +25,8 @@ const statusStyles = {
 </script>
 
 <template>
+    <Head title="Dashboard" />
+
     <AdminLayout>
         <div class="space-y-3">
             <!-- Header strip -->
