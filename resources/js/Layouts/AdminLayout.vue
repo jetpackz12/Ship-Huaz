@@ -22,6 +22,10 @@ const sidebarMenus = [
         children: [
             { menuName: "Bookings", route: route("admin.bookings.index") },
             {
+                menuName: "Daily Sales Report",
+                route: route("admin.sales.index"),
+            },
+            {
                 menuName: "Event Types",
                 route: route("admin.event-types.index"),
             },

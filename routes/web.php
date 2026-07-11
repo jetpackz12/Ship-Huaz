@@ -12,6 +12,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PackageAddOnController;
 use App\Http\Controllers\PaymentOptionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SaleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VenuePackageController;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,10 @@ Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('clien
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+
+    Route::prefix('sales')->name('sales.')->group(function () {
+        Route::get('/', [SaleController::class, 'index'])->name('index');
+    });
 
     Route::prefix('bookings')->name('bookings.')->group(function () {
         Route::get('/', [BookingController::class, 'indexAdmin'])->name('index');
