@@ -360,19 +360,6 @@ const confirmReservation = () => {
         onSuccess: (page) => {
             reservationCode.value = page.props.flash?.booking_ref;
 
-             localBookings.value.unshift({
-                ref: page.props.flash?.booking_ref ?? "—",
-                event: selectedEventTypeLabel.value,
-                date: eventDate.value,
-                time: timeSlot.value,
-                package: selectedPackageData.value?.name ?? "—",
-                addons: selectedAddonData.value.map((a) => a.name).join(", "),
-                amount: grandTotal.value,
-                payment_method: selectedPaymentOption.value?.label ?? "—",
-                payment_ref: payment.value.transactionNumber || "—",
-                status: "pending",
-            });
-
             nextStep();
         },
     });
