@@ -31,6 +31,7 @@ return new class extends Migration
             $table->decimal('total_payment', 10, 2);
             $table->date('date');
             $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
+            $table->enum('cancelled_by', ['client', 'admin'])->nullable();
             $table->timestamps();
         });
     }

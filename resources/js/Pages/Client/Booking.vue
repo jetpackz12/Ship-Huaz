@@ -2,10 +2,12 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import CalendarPicker from "@/Components/CalendarPicker.vue";
 import Table from "@/Components/Table.vue";
+import Modal from "@/Components/Modal.vue";
 import axios from "axios";
-import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { ref, computed, watch } from "vue";
 import { useFormatter } from "@/Composables/useFormatter";
+import { useModal } from "@/Composables/useModal";
 
 const props = defineProps({
     bookings: Array,
@@ -16,6 +18,13 @@ const props = defineProps({
 });
 
 const localBookings = ref([...( props.bookings ?? [])]);
+
+watch(
+    () => props.bookings,
+    (newVal) => {
+        localBookings.value = [...(newVal ?? [])];
+    }
+);
 
 const page = usePage();
 
@@ -33,6 +42,7 @@ const tableColumns = [
     { key: "amount", label: "Amount", slot: "amount" },
     { key: "payment_method", label: "Payment", slot: "payment" },
     { key: "status", label: "Status", slot: "status" },
+    { key: "actions", label: "Actions", slot: "actions" },
 ];
 
 // ─── Table: Default Data ───────────────────────────────────────────────────
@@ -40,6 +50,7 @@ const tableData = computed(() =>
     localBookings.value.map((b) => {
         if (b.ref !== undefined) return b;
         return {
+            id: b.id,
             ref: b.booking_ref,
             event: b.event_type?.type ?? "—",
             date: b.date,
@@ -50,7 +61,7 @@ const tableData = computed(() =>
                     ? b.package_add_ons.map((a) => a.title ?? a).join(", ")
                     : "",
             amount: b.total_payment,
-            payment_method: b.payment_option?.payment ?? "Pay at Venue",
+            payment_method: b.payment_option?.payment ?? "—",
             payment_ref: b.payment_transaction_ref ?? "—",
             status: b.status,
         };
@@ -61,6 +72,49 @@ const tableActions = {
     isDateFilterShow: false,
     isPerPageShow: false,
     isSearchShow: true,
+};
+
+// ─── Cancel Booking ─────────────────────────────────────────────────────────
+const {
+    open: showCancelModal,
+    openModal: openCancelModalRaw,
+    closeModal: closeCancelModal,
+} = useModal();
+
+const bookingToCancel = ref(null);
+const isCancelling = ref(false);
+
+const openCancelModal = (row) => {
+    if (row.status === "cancelled") return;
+    bookingToCancel.value = row;
+    openCancelModalRaw();
+};
+
+const confirmCancel = () => {
+    if (!bookingToCancel.value) return;
+
+    isCancelling.value = true;
+
+    router.put(
+        route("client.booking.cancel", {
+            booking: bookingToCancel.value.id,
+        }),
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                closeCancelModal();
+                bookingToCancel.value = null;
+            },
+            onError: () => {
+                alert("Could not cancel this booking. Please try again.");
+            },
+            onFinish: () => {
+                isCancelling.value = false;
+            },
+        }
+    );
 };
 
 // ─── Step Management ───────────────────────────────────────────────────────
@@ -81,6 +135,18 @@ const goToStep = (step) => {
 };
 const nextStep = () => goToStep(currentStep.value + 1);
 const prevStep = () => goToStep(currentStep.value - 1);
+
+// ─── Terms & Conditions Modal ───────────────────────────────────────────────
+const {
+    open: showTermsModal,
+    openModal: openTermsModal,
+    closeModal: closeTermsModal,
+} = useModal();
+
+const acceptTerms = () => {
+    closeTermsModal();
+    nextStep();
+};
 
 // ─── Step 1: Event Date & Time ─────────────────────────────────────────────
 const eventDate = ref("");
@@ -227,9 +293,9 @@ const step3Valid = computed(
 );
 
 // ─── Step 5: Payment ───────────────────────────────────────────────────────
-// ── Mapped from props.paymentOptions ─────────────────────────────────────
-const activePaymentOptions = computed(() => {
-    const fromDB = (props.paymentOptions ?? [])
+// ── Mapped from props.paymentOptions (Pay at Venue removed — online only) ──
+const activePaymentOptions = computed(() =>
+    (props.paymentOptions ?? [])
         .filter((o) => o.status === "active")
         .map((o) => ({
             id: o.id,
@@ -238,18 +304,8 @@ const activePaymentOptions = computed(() => {
             account: o.account,
             description: o.description,
             isOnline: true,
-        }));
-
-    return [
-        ...fromDB,
-        {
-            id: "property",
-            label: "Pay at Venue",
-            icon: "🚢",
-            isOnline: false,
-        },
-    ];
-});
+        })),
+);
 
 const payment = ref({
     method: "",
@@ -312,7 +368,7 @@ const confirmReservation = () => {
                 package: selectedPackageData.value?.name ?? "—",
                 addons: selectedAddonData.value.map((a) => a.name).join(", "),
                 amount: grandTotal.value,
-                payment_method: selectedPaymentOption.value?.label ?? "Pay at Venue",
+                payment_method: selectedPaymentOption.value?.label ?? "—",
                 payment_ref: payment.value.transactionNumber || "—",
                 status: "pending",
             });
@@ -489,6 +545,25 @@ const { formatDate, formatAmount } = useFormatter();
                             >
                                 {{ statusConfig[value]?.label ?? value }}
                             </span>
+                        </template>
+
+                        <template #actions="{ row }">
+                            <button
+                                v-if="row.status !== 'cancelled'"
+                                @click="openCancelModal(row)"
+                                :disabled="
+                                    isCancelling &&
+                                    bookingToCancel?.ref === row.ref
+                                "
+                                class="bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-2 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Cancel
+                            </button>
+                            <span
+                                v-else
+                                class="text-xs text-stone-400 italic"
+                                >Cancelled</span
+                            >
                         </template>
                     </Table>
                 </div>
@@ -1171,20 +1246,6 @@ const { formatDate, formatAmount } = useFormatter();
                                 />
                             </div>
                         </div>
-
-                        <div
-                            v-if="
-                                !selectedPaymentOption?.isOnline &&
-                                payment.method === 'property'
-                            "
-                            class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-800"
-                        >
-                            🚢 You'll settle the full amount of
-                            <strong>{{ fmt(grandTotal) }}</strong>
-                            upon arrival at Butal Ship Hauz, Talibon, Bohol.
-                            Your booking will be held pending confirmation by
-                            our team within 24 hours.
-                        </div>
                     </div>
 
                     <!-- ── STEP 6: CONFIRMED ───────────────────────────────── -->
@@ -1249,13 +1310,9 @@ const { formatDate, formatAmount } = useFormatter();
                                 {{ contact.lastName }}
                             </p>
                             <p>💰 {{ fmt(grandTotal) }}</p>
-                            <p v-if="payment.method !== 'property'">
+                            <p>
                                 💳 Paid via
-                                {{
-                                    payment.method === "gcash"
-                                        ? "GCash"
-                                        : "Maya"
-                                }}
+                                {{ selectedPaymentOption?.label }}
                                 · Ref# {{ payment.transactionNumber }}
                             </p>
                         </div>
@@ -1314,7 +1371,9 @@ const { formatDate, formatAmount } = useFormatter();
                             @click="
                                 currentStep === 1
                                     ? checkAvailability()
-                                    : nextStep()
+                                    : currentStep === 4
+                                      ? openTermsModal()
+                                      : nextStep()
                             "
                             :disabled="
                                 (currentStep === 1 &&
@@ -1358,6 +1417,110 @@ const { formatDate, formatAmount } = useFormatter();
                     Step {{ Math.min(currentStep, 5) }} of 5
                 </p>
             </div>
+
         </div>
+
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- TERMS & CONDITIONS MODAL                                       -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <Modal :show="showTermsModal" max-width="md" @close="closeTermsModal">
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-xl">📜</span>
+                    <h3 class="text-lg font-bold text-stone-800">
+                        Terms & Conditions
+                    </h3>
+                </div>
+                <div
+                    class="text-sm text-stone-600 space-y-3 mb-6 max-h-72 overflow-y-auto pr-1"
+                >
+                    <p>
+                        By proceeding to payment, you agree to the following
+                        booking terms for Butal Ship Hauz:
+                    </p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>
+                            Bookings are confirmed only upon receipt and
+                            verification of payment.
+                        </li>
+                        <li>
+                            If you cancel your booking, you will only receive
+                            <strong>50% of your total payment</strong> as a
+                            refund. The remaining 50% is retained as a
+                            cancellation fee.
+                        </li>
+                        <li>
+                            Rescheduling requests are subject to venue
+                            availability and must be made at least 3 days
+                            before the event date.
+                        </li>
+                        <li>
+                            No-shows on the event date are not eligible for
+                            any refund.
+                        </li>
+                    </ul>
+                </div>
+                <div class="flex items-center justify-end gap-3">
+                    <button
+                        @click="closeTermsModal"
+                        class="text-sm font-semibold text-stone-500 hover:text-stone-700 px-4 py-2.5 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        @click="acceptTerms"
+                        class="bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold px-6 py-2.5 rounded-xl shadow transition-colors"
+                    >
+                        I Agree, Continue →
+                    </button>
+                </div>
+            </div>
+        </Modal>
+
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- CANCEL BOOKING CONFIRMATION MODAL                              -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <Modal :show="showCancelModal" max-width="md" @close="closeCancelModal">
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-xl">⚠️</span>
+                    <h3 class="text-lg font-bold text-stone-800">
+                        Cancel Booking
+                    </h3>
+                </div>
+                <p class="text-sm text-stone-600 mb-2">
+                    Are you sure you want to cancel booking
+                    <strong class="font-mono">{{
+                        bookingToCancel?.ref
+                    }}</strong>
+                    ?
+                </p>
+                <p class="text-sm text-stone-600 mb-6">
+                    Per our terms, only
+                    <strong>50% of the payment</strong> will be refunded upon
+                    cancellation. This action cannot be undone.
+                </p>
+                <div class="flex items-center justify-end gap-3">
+                    <button
+                        @click="closeCancelModal"
+                        :disabled="isCancelling"
+                        class="text-sm font-semibold text-stone-500 hover:text-stone-700 px-4 py-2.5 transition-colors disabled:opacity-50"
+                    >
+                        Keep Booking
+                    </button>
+                    <button
+                        @click="confirmCancel"
+                        :disabled="isCancelling"
+                        class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl shadow transition-colors disabled:opacity-50"
+                    >
+                        {{
+                            isCancelling
+                                ? "Cancelling…"
+                                : "Yes, Cancel Booking"
+                        }}
+                    </button>
+                </div>
+            </div>
+        </Modal>
     </AuthenticatedLayout>
 </template>

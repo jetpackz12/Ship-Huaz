@@ -201,10 +201,24 @@ class BookingController extends Controller
 
         $booking->update([
             'status' => $request->status,
+            'cancelled_by' => $request->status === 'cancelled' ? 'admin' : null
         ]);
 
-
         $this->sendBookingStatusEmail($booking, $request->status);
+
+        return back()->with([
+            'success' => 'Booking status updated successfully.',
+        ]);
+    }
+
+    public function cancel(Booking $booking)
+    {
+        $booking->update([
+            'status' => 'cancelled',
+            'cancelled_by' => 'client'
+        ]);
+
+        $this->sendBookingStatusEmail($booking, 'cancelled');
 
         return back()->with([
             'success' => 'Booking status updated successfully.',

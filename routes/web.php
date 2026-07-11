@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified', 'client'])->prefix('client')->name('clien
     Route::prefix('booking')->name('booking.')->group(function () {
         Route::get('/', [BookingController::class, 'index'])->name('index');
         Route::post('/store', [BookingController::class, 'store'])->name('store');
+        Route::put('/cancel/{booking}', [BookingController::class, 'cancel'])->name('cancel');
         Route::post('/check-availability', [BookingController::class, 'checkAvailability'])->name('check-availability');
     });
 
