@@ -13,7 +13,11 @@ const props = defineProps({
         }),
     },
     dateKey: { type: String, default: "date" },
+    initialEmpty: { type: Boolean, default: false },
+    emptyStateMessage: { type: String, default: null },
 });
+
+const emit = defineEmits(["filtered-change"]);
 
 // --- Search & Filter ---
 const searchQuery = ref("");
@@ -28,8 +32,6 @@ const perPageOptions = [5, 10, 25];
 const filteredBookings = computed(() => {
     return props.data.filter((b) => {
         const query = searchQuery.value.toLowerCase();
-
-        // Dynamically search across all column keys
         const matchesSearch =
             !query ||
             props.columns.some((col) =>
@@ -46,21 +48,37 @@ const filteredBookings = computed(() => {
     });
 });
 
-// Reset to page 1 when filters/search/perPage changes
+const hasActiveFilters = computed(() => {
+    return searchQuery.value || dateFrom.value || dateTo.value;
+});
+
 watch([searchQuery, dateFrom, dateTo, perPage], () => {
     currentPage.value = 1;
 });
+
+watch(
+    [filteredBookings, dateFrom, dateTo, hasActiveFilters],
+    () => {
+        emit("filtered-change", {
+            rows: filteredBookings.value,
+            dateFrom: dateFrom.value,
+            dateTo: dateTo.value,
+            hasFilters: hasActiveFilters.value,
+        });
+    },
+    { immediate: true },
+);
 
 const totalPages = computed(
     () => Math.ceil(filteredBookings.value.length / perPage.value) || 1,
 );
 
 const paginatedData = computed(() => {
+    if (props.initialEmpty && !hasActiveFilters.value) return [];
     const start = (currentPage.value - 1) * perPage.value;
     return filteredBookings.value.slice(start, start + perPage.value);
 });
 
-// Visible page numbers (max 5 shown at a time)
 const visiblePages = computed(() => {
     const total = totalPages.value;
     const current = currentPage.value;
@@ -89,11 +107,6 @@ const clearFilters = () => {
     dateTo.value = "";
 };
 
-const hasActiveFilters = computed(() => {
-    return searchQuery.value || dateFrom.value || dateTo.value;
-});
-
-// Range info e.g. "Showing 1–5 of 12"
 const rangeStart = computed(() =>
     filteredBookings.value.length === 0
         ? 0
@@ -101,6 +114,10 @@ const rangeStart = computed(() =>
 );
 const rangeEnd = computed(() =>
     Math.min(currentPage.value * perPage.value, filteredBookings.value.length),
+);
+
+const isShowingResults = computed(
+    () => !props.initialEmpty || hasActiveFilters.value,
 );
 </script>
 <template>
@@ -223,19 +240,30 @@ const rangeEnd = computed(() =>
                             icon="fa-solid fa-calendar-xmark"
                             class="text-2xl mb-2 block mx-auto"
                         />
-                        <p class="text-sm font-medium">No records found</p>
-                        <p class="text-xs mt-1">
+                        <p class="text-sm font-medium">
+                            {{
+                                isShowingResults
+                                    ? "No records found"
+                                    : (emptyStateMessage ?? "Apply a filter to view records")
+                            }}
+                        </p>
+                        <p class="text-xs mt-1" v-if="isShowingResults">
                             Try adjusting your search or filters.
                         </p>
                     </td>
                 </tr>
             </tbody>
+
+            <!-- Optional summary row (e.g. a grand total), supplied by the parent -->
+            <tfoot v-if="$slots.summary && isShowingResults && filteredBookings.length > 0">
+                <slot name="summary" />
+            </tfoot>
         </table>
     </div>
 
     <!-- Pagination Footer -->
     <div
-        v-if="filteredBookings.length > 0"
+        v-if="filteredBookings.length > 0 && isShowingResults"
         class="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3"
     >
         <!-- Range info -->
