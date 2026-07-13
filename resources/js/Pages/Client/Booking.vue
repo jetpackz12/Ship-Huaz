@@ -536,7 +536,7 @@ const { formatDate, formatAmount } = useFormatter();
 
                         <template #actions="{ row }">
                             <button
-                                v-if="row.status !== 'cancelled'"
+                                v-if="row.status !== 'cancelled' || row.status !== 'completed'"
                                 @click="openCancelModal(row)"
                                 :disabled="
                                     isCancelling &&
