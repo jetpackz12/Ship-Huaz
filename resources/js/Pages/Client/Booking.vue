@@ -17,13 +17,13 @@ const props = defineProps({
     paymentOptions: Array,
 });
 
-const localBookings = ref([...( props.bookings ?? [])]);
+const localBookings = ref([...(props.bookings ?? [])]);
 
 watch(
     () => props.bookings,
     (newVal) => {
         localBookings.value = [...(newVal ?? [])];
-    }
+    },
 );
 
 const page = usePage();
@@ -65,7 +65,7 @@ const tableData = computed(() =>
             payment_ref: b.payment_transaction_ref ?? "—",
             status: b.status,
         };
-    })
+    }),
 );
 
 const tableActions = {
@@ -113,7 +113,7 @@ const confirmCancel = () => {
             onFinish: () => {
                 isCancelling.value = false;
             },
-        }
+        },
     );
 };
 
@@ -187,7 +187,7 @@ const checkAvailability = async () => {
             {
                 date: eventDate.value,
                 time_slot: timeSlot.value,
-            }
+            },
         );
 
         isAvailable.value = data.available;
@@ -536,7 +536,10 @@ const { formatDate, formatAmount } = useFormatter();
 
                         <template #actions="{ row }">
                             <button
-                                v-if="row.status !== 'cancelled' || row.status !== 'completed'"
+                                v-if="
+                                    row.status !== 'cancelled' &&
+                                    row.status !== 'completed'
+                                "
                                 @click="openCancelModal(row)"
                                 :disabled="
                                     isCancelling &&
@@ -546,11 +549,13 @@ const { formatDate, formatAmount } = useFormatter();
                             >
                                 Cancel
                             </button>
-                            <span
-                                v-else
-                                class="text-xs text-stone-400 italic"
-                                >Cancelled</span
-                            >
+                            <span v-else class="text-xs text-stone-400 italic">
+                                {{
+                                    row.status === "completed"
+                                        ? "Completed"
+                                        : "Cancelled"
+                                }}
+                            </span>
                         </template>
                     </Table>
                 </div>
@@ -1089,7 +1094,9 @@ const { formatDate, formatAmount } = useFormatter();
                                 <span class="text-stone-700"
                                     >{{ addon.icon }} {{ addon.name }}</span
                                 >
-                                <span class="font-semibold text-stone-800">{{ fmt(addon.price) }}</span>
+                                <span class="font-semibold text-stone-800">{{
+                                    fmt(addon.price)
+                                }}</span>
                             </div>
                         </div>
 
@@ -1404,7 +1411,6 @@ const { formatDate, formatAmount } = useFormatter();
                     Step {{ Math.min(currentStep, 5) }} of 5
                 </p>
             </div>
-
         </div>
 
         <!-- ══════════════════════════════════════════════════════════════ -->
@@ -1438,12 +1444,12 @@ const { formatDate, formatAmount } = useFormatter();
                         </li>
                         <li>
                             Rescheduling requests are subject to venue
-                            availability and must be made at least 3 days
-                            before the event date.
+                            availability and must be made at least 3 days before
+                            the event date.
                         </li>
                         <li>
-                            No-shows on the event date are not eligible for
-                            any refund.
+                            No-shows on the event date are not eligible for any
+                            refund.
                         </li>
                     </ul>
                 </div>
@@ -1501,9 +1507,7 @@ const { formatDate, formatAmount } = useFormatter();
                         class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl shadow transition-colors disabled:opacity-50"
                     >
                         {{
-                            isCancelling
-                                ? "Cancelling…"
-                                : "Yes, Cancel Booking"
+                            isCancelling ? "Cancelling…" : "Yes, Cancel Booking"
                         }}
                     </button>
                 </div>
