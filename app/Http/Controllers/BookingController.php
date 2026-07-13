@@ -197,6 +197,18 @@ class BookingController extends Controller
             'status' => 'required|in:confirmed,cancelled,completed',
         ]);
 
+        if ($booking->status === 'completed' && $request->status === 'cancelled') {
+            return back()->with([
+                'error' => 'This booking is already completed and cannot be cancelled.',
+            ]);
+        }
+
+        if ($booking->status === 'cancelled' && in_array($request->status, ['confirmed', 'completed'])) {
+            return back()->with([
+                'error' => 'This booking is already cancelled and cannot be confirmed or completed.',
+            ]);
+        }
+
         $booking->load('user', 'eventType', 'venuePackage');
 
         $booking->update([
@@ -213,6 +225,18 @@ class BookingController extends Controller
 
     public function cancel(Booking $booking)
     {
+        if ($booking->status === 'completed') {
+            return back()->with([
+                'error' => 'This booking is already completed and cannot be cancelled.',
+            ]);
+        }
+
+        if ($booking->status === 'cancelled') {
+            return back()->with([
+                'error' => 'This booking is already cancelled.',
+            ]);
+        }
+
         $booking->update([
             'status' => 'cancelled',
             'cancelled_by' => 'client'
