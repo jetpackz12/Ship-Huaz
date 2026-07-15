@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\BookingMail;
+use App\Models\MessageThread;
 
 class BookingController extends Controller
 {
@@ -215,6 +216,14 @@ class BookingController extends Controller
             'status' => $request->status,
             'cancelled_by' => $request->status === 'cancelled' ? 'admin' : null
         ]);
+
+        if ($request->status === 'completed') {
+            MessageThread::where('booking_id', $booking->id)
+                ->update([
+                    'is_read_by_client' => true,
+                    'is_read_by_admin' => true
+                ]);
+        }
 
         $this->sendBookingStatusEmail($booking, $request->status);
 
