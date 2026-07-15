@@ -220,8 +220,8 @@ class BookingController extends Controller
         if ($request->status === 'completed') {
             MessageThread::where('booking_id', $booking->id)
                 ->update([
-                    'is_read_by_client' => true,
-                    'is_read_by_admin' => true
+                    'read_by_client' => true,
+                    'read_by_admin' => true
                 ]);
         }
 
